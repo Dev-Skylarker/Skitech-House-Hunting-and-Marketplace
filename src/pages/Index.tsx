@@ -189,7 +189,7 @@ const Index = () => {
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#FF7A00]/5 rounded-full -ml-24 -mb-24 blur-[80px]" />
           <h1 className="font-heading font-medium text-3xl sm:text-4xl text-white leading-[1.1] relative z-10 min-h-[80px]">
             {heroTitle}
-            <span className="w-[3px] h-7 bg-[#7A431D] inline-block ml-1 animate-pulse rounded-full align-middle" />
+            <span className="w-[3px] h-7 bg-[#FF7A00] inline-block ml-1 animate-pulse rounded-full align-middle" />
           </h1>
           <div className="mt-4 relative sticky top-2 z-40">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -208,7 +208,7 @@ const Index = () => {
             <button
               type="button"
               onClick={() => handleSearchSubmit(search)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 h-6 px-3 rounded-full bg-[#7A431D] text-white flex items-center justify-center text-xs font-semibold hover:bg-[#7A431D]/90 transition-colors"
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-6 px-3 rounded-full bg-[#FF7A00] text-white flex items-center justify-center text-xs font-semibold hover:bg-[#FF7A00]/90 transition-colors"
             >
               Search
             </button>
@@ -303,7 +303,7 @@ const Index = () => {
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#FF7A00]/5 rounded-full -ml-24 -mb-24 blur-[80px]" />
         <h1 className="font-heading font-medium text-3xl sm:text-4xl text-white leading-[1.1] px-4 max-w-sm sm:max-w-md relative z-10 min-h-[80px]">
           {heroTitle}
-          <span className="w-[3px] h-7 bg-[#7A431D] inline-block ml-1 animate-pulse rounded-full align-middle" />
+          <span className="w-[3px] h-7 bg-[#FF7A00] inline-block ml-1 animate-pulse rounded-full align-middle" />
         </h1>
         <div className="mt-4 relative sticky top-2 z-40">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -322,7 +322,7 @@ const Index = () => {
           <button
             type="button"
             onClick={() => handleSearchSubmit(search)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 h-6 px-3 rounded-full bg-[#7A431D] text-white flex items-center justify-center text-xs font-semibold hover:bg-[#7A431D]/90 transition-colors"
+            className="absolute right-2 top-1/2 -translate-y-1/2 h-6 px-3 rounded-full bg-[#FF7A00] text-white flex items-center justify-center text-xs font-semibold hover:bg-[#FF7A00]/90 transition-colors"
           >
             Search
           </button>

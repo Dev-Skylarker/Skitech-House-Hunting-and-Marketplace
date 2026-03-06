@@ -11,7 +11,7 @@ export function GlobalFooter() {
                     <div className="space-y-4">
                         <h2 className="text-xl font-heading font-black tracking-tight leading-tight uppercase text-[#0F3D91]">
                             SKITECH HOUSE-HUNTING<br />
-                            <span className="text-[#7A431D]">& MARKETPLACE</span>
+                            <span className="text-[#FF7A00]">& MARKETPLACE</span>
                         </h2>
                         <p className="text-slate-500 text-xs leading-relaxed max-w-xs font-medium">
                             Finding your perfect home in Embu made simple. Verified listings, secure transitions, and local marketplace deals.
@@ -24,7 +24,7 @@ export function GlobalFooter() {
                                     href="https://skitechsolutions.vercel.app"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="hover:text-[#7A431D] transition-colors"
+                                    className="hover:text-[#FF7A00] transition-colors"
                                 >
                                     <ExternalLink className="w-3 h-3" />
                                 </a>
@@ -35,7 +35,7 @@ export function GlobalFooter() {
                     {/* Links Column */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-3">
-                            <h3 className="text-[#7A431D] font-black uppercase text-[9px] tracking-widest">System Guide</h3>
+                            <h3 className="text-[#FF7A00] font-black uppercase text-[9px] tracking-widest">System Guide</h3>
                             <ul className="space-y-2 text-xs text-slate-500 font-bold">
                                 <li><Link to="/guide" className="hover:text-[#0F3D91] transition-colors">How it Works</Link></li>
                                 <li><Link to="/guide" className="hover:text-[#0F3D91] transition-colors">Become a Landlord</Link></li>
@@ -43,7 +43,7 @@ export function GlobalFooter() {
                             </ul>
                         </div>
                         <div className="space-y-3">
-                            <h3 className="text-[#7A431D] font-black uppercase text-[9px] tracking-widest">Essential Hub</h3>
+                            <h3 className="text-[#FF7A00] font-black uppercase text-[9px] tracking-widest">Essential Hub</h3>
                             <ul className="space-y-2 text-xs text-slate-500 font-bold">
                                 <li><Link to="/privacy" className="hover:text-[#0F3D91] transition-colors">Privacy Policy</Link></li>
                                 <li><Link to="/terms" className="hover:text-[#0F3D91] transition-colors">Terms of Service</Link></li>
@@ -67,7 +67,7 @@ export function GlobalFooter() {
                             href="https://wa.me/254741909607"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group flex items-center justify-center gap-2 w-full bg-[#0F3D91] hover:bg-[#7A431D] text-white font-black uppercase text-[10px] tracking-widest py-3 rounded-2xl transition-all shadow-lg active:scale-95"
+                            className="group flex items-center justify-center gap-2 w-full bg-[#0F3D91] hover:bg-[#FF7A00] text-white font-black uppercase text-[10px] tracking-widest py-3 rounded-2xl transition-all shadow-lg active:scale-95"
                         >
                             <MessageCircle className="w-4 h-4" />
                             Talk to Us Now

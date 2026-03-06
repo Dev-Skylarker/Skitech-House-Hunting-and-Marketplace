@@ -47,7 +47,7 @@ export default function PrivacyPage() {
           {/* Introduction */}
           <section className="space-y-4">
             <h2 className="text-2xl font-heading font-black text-slate-900 tracking-tight uppercase">
-              1. Our <span className="text-[#7A431D]">Commitment</span>
+              1. Our <span className="text-[#FF7A00]">Commitment</span>
             </h2>
             <p className="text-slate-500 leading-relaxed font-medium">
               Skitech House Hunting and marketplace-Embu ("we" or "us" or "our") is owned and managed by{' '}
@@ -79,7 +79,7 @@ export default function PrivacyPage() {
             <div className="space-y-6">
               <div className="bg-slate-50 p-6 rounded-[32px] border border-slate-100">
                 <div className="flex items-center gap-3 mb-3">
-                  <Database className="w-5 h-5 text-[#7A431D]" />
+                  <Database className="w-5 h-5 text-[#FF7A00]" />
                   <h3 className="font-heading font-black text-slate-800 text-sm uppercase tracking-wider">Personal Data</h3>
                 </div>
                 <p className="text-slate-500 text-sm font-medium leading-relaxed">

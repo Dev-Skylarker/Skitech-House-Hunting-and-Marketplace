@@ -28,14 +28,14 @@ export default function TermsPage() {
           </div>
 
           <h1 className="text-4xl font-heading font-black text-white tracking-tight leading-tight uppercase">
-            Terms of <span className="text-[#D97706]">Service</span>
+            Terms of <span className="text-[#FF7A00]">Service</span>
           </h1>
           <div className="flex items-center justify-center gap-4">
-            <span className="h-[2px] w-12 bg-[#D97706]" />
+            <span className="h-[2px] w-12 bg-[#FF7A00]" />
             <p className="text-blue-200 font-bold text-[10px] uppercase tracking-[0.2em]">
               The Skitech Community Agreement
             </p>
-            <span className="h-[2px] w-12 bg-[#D97706]" />
+            <span className="h-[2px] w-12 bg-[#FF7A00]" />
           </div>
         </div>
       </div>
@@ -77,7 +77,7 @@ export default function TermsPage() {
             {/* 2. Usage Rules */}
             <section className="space-y-6">
               <div className="flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[#7A431D] text-white font-black text-xs">02</span>
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[#FF7A00] text-white font-black text-xs">02</span>
                 <h2 className="text-2xl font-heading font-black text-slate-900 tracking-tight uppercase">Community Guidelines</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-11">

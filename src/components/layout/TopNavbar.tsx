@@ -38,7 +38,7 @@ export function TopNavbar() {
               <span className="font-heading font-black text-[#0F3D91] text-[16px] sm:text-[20px] uppercase tracking-tighter">
                 SKITECH HOUSE-HUNTING
               </span>
-              <span className="font-heading font-black text-[#7A431D] text-[12px] sm:text-[14px] uppercase tracking-widest mt-0.5">
+              <span className="font-heading font-black text-[#FF7A00] text-[12px] sm:text-[14px] uppercase tracking-widest mt-0.5">
                 & MARKETPLACE
               </span>
             </div>
