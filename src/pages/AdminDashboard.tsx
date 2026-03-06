@@ -55,7 +55,7 @@ export default function AdminDashboard() {
       </div>
 
       <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-sm">Views This Week</CardTitle></CardHeader>
+        <CardHeader className="pb-2"><CardTitle className="font-heading font-semibold text-sm">Views This Week</CardTitle></CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={viewsData}>
@@ -69,7 +69,7 @@ export default function AdminDashboard() {
       </Card>
 
       <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-sm">House Categories</CardTitle></CardHeader>
+        <CardHeader className="pb-2"><CardTitle className="font-heading font-semibold text-sm">House Categories</CardTitle></CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={categoryData}>

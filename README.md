@@ -1,73 +1,158 @@
-# Welcome to your Lovable project
+# UOEM Home Finder
 
-## Project info
+Your comprehensive real estate platform for discovering and listing properties.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## 🏠 About
 
-## How can I edit this code?
+UOEM Home Finder is a modern digital real estate platform that simplifies the home hunting experience. Whether you're looking for your dream house or listing a property, our platform provides intuitive tools and a seamless interface to connect buyers and sellers.
 
-There are several ways of editing your application.
+### Key Features
 
-**Use Lovable**
+- **Browse Properties** — Explore a curated selection of available houses with detailed information and high-quality imagery
+- **Property Details** — View comprehensive house listings with specifications, pricing, and seller information
+- **List Your Property** — Easily post your property for sale with an intuitive listing form
+- **Marketplace** — Buy and sell home-related items and services
+- **Save Favorites** — Keep track of properties you're interested in
+- **User Accounts** — Manage your profile, listings, and preferences
+- **Admin Dashboard** — Monitor platform activity and manage content (admin only)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## 🚀 Quick Start
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+- Node.js (v16 or higher)
+- npm or your preferred package manager
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+### Installation
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
+# Clone the repository
 git clone <YOUR_GIT_URL>
+cd uoem-home-finder
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
+# Install dependencies
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The application will be available at `http://localhost:5173`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 📖 Available Scripts
 
-**Use GitHub Codespaces**
+```sh
+# Development server with hot reload
+npm run dev
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# Build for production
+npm build
 
-## What technologies are used for this project?
+# Build in development mode
+npm run build:dev
 
-This project is built with:
+# Lint code
+npm run lint
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# Preview production build
+npm run preview
 
-## How can I deploy this project?
+# Run tests
+npm test
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+# Watch tests during development
+npm run test:watch
+```
 
-## Can I connect a custom domain to my Lovable project?
+## 🛠️ Technology Stack
 
-Yes, you can!
+| Technology | Purpose |
+|---|---|
+| **React 18** | UI framework |
+| **TypeScript** | Type-safe JavaScript |
+| **Vite** | Lightning-fast build tool and dev server |
+| **React Router** | Client-side routing |
+| **Tailwind CSS** | Utility-first CSS framework |
+| **shadcn/ui** | High-quality UI components |
+| **React Hook Form** | Form state management |
+| **Zod** | Schema validation |
+| **React Query** | Data fetching and caching |
+| **Recharts** | Data visualization |
+| **Lucide React** | Icon library |
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 📁 Project Structure
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+```
+src/
+├── pages/               # Route pages
+│   ├── Index.tsx        # Home page
+│   ├── HousesPage.tsx   # Browse properties
+│   ├── HouseDetailsPage.tsx
+│   ├── PostHousePage.tsx
+│   ├── MarketplacePage.tsx
+│   ├── PostItemPage.tsx
+│   ├── SavedPage.tsx
+│   ├── AccountPage.tsx
+│   └── AdminDashboard.tsx
+├── components/          # Reusable components
+│   ├── HouseCard.tsx
+│   ├── ItemCard.tsx
+│   ├── layout/          # Layout components
+│   └── ui/              # shadcn/ui components
+├── contexts/            # React contexts
+├── hooks/               # Custom React hooks
+├── services/            # API and utility services
+├── types/               # TypeScript type definitions
+├── lib/                 # Helper utilities
+└── main.tsx            # App entry point
+```
+
+## 🔧 Development
+
+### Working Locally with Your IDE
+
+1. Clone the repository and navigate to the project directory
+2. Install dependencies: `npm i`
+3. Start the development server: `npm run dev`
+4. Open your IDE and make changes
+5. Changes will automatically reload in the browser
+
+### Code Quality
+
+- **Linting** — Run `npm run lint` to check code quality
+- **Testing** — Run `npm test` for unit tests
+
+## 📦 Deployment
+
+The application is ready to deploy to any static hosting service:
+
+- **Vercel** — Automatic deployments from Git
+- **Netlify** — Connect your repository for CI/CD
+- **GitHub Pages** — Static hosting for the built application
+- **Docker** — Containerize and deploy anywhere
+
+Build the application for production:
+
+```sh
+npm run build
+# Output will be in the dist/ directory
+```
+
+## 🤝 Contributing
+
+1. Create a new branch for your feature: `git checkout -b feature/my-feature`
+2. Make your changes and test thoroughly
+3. Commit with clear messages: `git commit -m "Add my feature"`
+4. Push to your branch and create a pull request
+
+## 📝 License
+
+This project is private and proprietary.
+
+## 📞 Support
+
+For questions or issues, please reach out to the development team.
+
+---
+
+**Built with ❤️ for home hunters everywhere**

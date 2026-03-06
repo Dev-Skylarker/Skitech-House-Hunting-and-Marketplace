@@ -8,16 +8,44 @@ import { HouseCard } from '@/components/HouseCard';
 import { useFavorites } from '@/hooks/useFavorites';
 import { api } from '@/services/api';
 import type { House } from '@/types';
+import { cn } from '@/lib/utils';
 
 export default function HousesPage() {
   const [searchParams] = useSearchParams();
   const [houses, setHouses] = useState<House[]>([]);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(searchParams.get('search') || '');
   const [type, setType] = useState(searchParams.get('type') || 'all');
   const [sort, setSort] = useState('newest');
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [placeholderText, setPlaceholderText] = useState('Search houses...');
   const { favoriteHouses, toggleFavoriteHouse } = useFavorites();
+
+  useEffect(() => {
+    const phrases = [
+      'Search houses...',
+      'Bedsitter in Kangaru',
+      '1 Bedroom near Main Gate',
+      'Apartments under 10k',
+    ];
+    let charIndex = 0;
+    let timeoutId: any;
+    const type = () => {
+      const p = phrases[placeholderIndex];
+      setPlaceholderText(p.slice(0, charIndex));
+      if (charIndex < p.length) {
+        charIndex++;
+        timeoutId = setTimeout(type, 100);
+      } else {
+        timeoutId = setTimeout(() => {
+          setPlaceholderIndex((v) => (v + 1) % phrases.length);
+        }, 1500);
+      }
+    };
+    type();
+    return () => clearTimeout(timeoutId);
+  }, [placeholderIndex]);
 
   useEffect(() => {
     api.getHouses({ type: type !== 'all' ? type : undefined, search: search || undefined }).then(results => {
@@ -31,18 +59,55 @@ export default function HousesPage() {
   }, [search, type, sort]);
 
   return (
-    <div className="px-4 py-4 space-y-4">
-      <div className="flex gap-2">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Search houses..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
+    <div className="px-4 py-4 space-y-4 bg-[#F7F9FC] min-h-[calc(100vh-4rem)]">
+      <div className="sticky top-2 z-40 flex flex-col gap-3">
+        <div className="flex gap-2">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder={placeholderText}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  // Search is already reactive, but this ensures a 'submit' feel
+                }
+              }}
+              className="pl-10 pr-20 h-11 text-sm rounded-full shadow-md border-0 bg-white"
+            />
+            <button
+              onClick={() => { }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-7 px-3 rounded-full bg-[#FF7A00] text-white flex items-center justify-center text-[10px] font-bold"
+            >
+              SEARCH
+            </button>
+          </div>
+          <div className="flex gap-1.5">
+            <Button
+              variant="outline"
+              size="icon"
+              className={cn(
+                "h-11 w-11 rounded-full bg-white shadow-sm border border-slate-100 transition-all duration-300",
+                showFilters ? "bg-[#0F3D91] text-white shadow-[#0F3D91]/20 scale-105" : "text-slate-600 hover:bg-slate-50"
+              )}
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <SlidersHorizontal className="w-4 h-4 shadow-sm" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className={cn(
+                "h-11 w-11 rounded-full bg-white shadow-sm border border-slate-100 transition-all duration-300",
+                viewMode === 'list' ? "bg-[#0F3D91] text-white shadow-[#0F3D91]/20 scale-105" : "text-slate-600 hover:bg-slate-50"
+              )}
+              onClick={() => setViewMode(v => (v === 'grid' ? 'list' : 'grid'))}
+            >
+              {viewMode === 'grid' ? <List className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
+            </Button>
+          </div>
         </div>
-        <Button variant="outline" size="icon" onClick={() => setShowFilters(!showFilters)}>
-          <SlidersHorizontal className="w-4 h-4" />
-        </Button>
-        <Button variant="outline" size="icon" onClick={() => setViewMode(v => v === 'grid' ? 'list' : 'grid')}>
-          {viewMode === 'grid' ? <List className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
-        </Button>
       </div>
 
       {showFilters && (
@@ -69,9 +134,20 @@ export default function HousesPage() {
         </div>
       )}
 
-      <div className={viewMode === 'grid' ? 'grid grid-cols-2 gap-3' : 'space-y-3'}>
+      <div className={cn(
+        viewMode === 'grid'
+          ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3'
+          : 'flex flex-col gap-4 max-w-4xl mx-auto w-full'
+      )}>
         {houses.map(house => (
-          <HouseCard key={house.id} house={house} isFavorite={favoriteHouses.includes(house.id)} onToggleFavorite={toggleFavoriteHouse} />
+          <HouseCard
+            key={house.id}
+            house={house}
+            isFavorite={favoriteHouses.includes(house.id)}
+            onToggleFavorite={toggleFavoriteHouse}
+            size="base"
+            layout={viewMode}
+          />
         ))}
       </div>
 
