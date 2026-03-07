@@ -1,0 +1,120 @@
+================================================================================
+SKITECH. ECOSYSTEM - FULL-STACK SYSTEM BLUEPRINT
+================================================================================
+
+I. PAGE-BY-PAGE FUNCTIONS & SUB-FUNCTIONS
+-----------------------------------------
+
+1. Home Page (/)
+   - Functions: Featured Listings Slider, Discovery Hub (Quick Categories), Marketing Slideshows.
+   - Sub-functions: Search (Filter by location/type), "Tell us what you need" CTA, Feedback Popup trigger.
+
+2. House Listings (/houses)
+   - Functions: Grid view of residential properties, Advanced filtering sidebar.
+   - Sub-functions: Sorting (Price, Newest), Map view toggle (Placeholder), Distance-from-campus indicator.
+
+3. House Details (/houses/:id)
+   - Functions: Image gallery (Full screen), Property specs, Amenities list.
+   - Sub-functions: "Safety First" guide, Contact Landlord (WhatsApp/Call), Leave Review (Authenticated), Share Listing.
+
+4. Marketplace (/marketplace)
+   - Functions: Category-based item browsing, Unified grid of second-hand items.
+   - Sub-functions: Search by condition, category, or price range.
+
+5. Marketplace Details (/marketplace/:id)
+   - Functions: Item description, Seller profile badge, Image zooming.
+   - Sub-functions: Direct WhatsApp chat, Negotiate/Offer button.
+
+6. Account Hub (/account)
+   - Functions: Role-based Dashboard (Resident vs. Property Owner).
+   - Sub-functions:
+     * Tenant View: Saved Houses, Inquiry History, Notification Feed.
+     * Owner View: Reputation Score, Active Listing Management (Edit/Status Toggle/Delete), Analytics (Views/Engagement).
+     * Admin View: Access to Admin Dashboard.
+
+7. Post Property (/post-house)
+   - Functions: Multi-step listing form (Basic Info, Media, Details, Contact).
+   - Sub-functions: GPS Pinner, 9-Image Upload Gallery (Cover + 8), Image Compression link.
+
+8. Help Center (/help)
+   - Functions: Resource library, Usage guides, FAQs, Testimony wall.
+   - Sub-functions: Flag Scam, Leave Platform Review, View Versioning.
+
+9. Inquiry System (/inquiry)
+   - Functions: "Missing Something?" form with dual tabs (Houses vs. Items).
+   - Sub-functions: Broadcast request to all verified owners/sellers.
+
+II. NAVIGATION MAP & PERMISSIONS
+--------------------------------
+
+| Route                | Label               | Permission (Role)       |
+|----------------------|---------------------|--------------------------|
+| /                    | Home                | Guest/All               |
+| /houses              | Browse Houses       | All                     |
+| /marketplace         | Marketplace         | All                     |
+| /saved               | Favorites           | Registered Users        |
+| /account             | Dashboard           | Registered Users        |
+| /notifications       | Alerts              | Registered Users        |
+| /post-house          | List Property       | Property Owners (Verified)|
+| /post-item           | Sell Item           | Registered Users        |
+| /admin               | Control Center      | Admin Only              |
+| /legal               | Legal & Info        | All                     |
+| /guide               | System Guide        | All                     |
+| /help                | Help Center         | All                     |
+
+* SYSTEM CONSTANTS:
+  - BottomNav Height: ~64px (Base height + Icon + Label) + env(safe-area-inset-bottom).
+  - Global Margin Buffer: pb-24 (equivalent to max BottomNav + safe space) must be applied to main layouts on mobile to prevent obstruction.
+
+III. DATA FLOW & API REQUIREMENTS
+---------------------------------
+
+Current `api.ts` (Mock) must be replaced by the following RESTful endpoints:
+
+[AUTH SERVICE]
+- POST /api/auth/register    -> User creation + Role assignment
+- POST /api/auth/login       -> JWT Generation
+- GET  /api/auth/me          -> User session validation
+
+[PROPERTY SERVICE]
+- GET  /api/houses           -> Get all (with query filters)
+- GET  /api/houses/:id       -> Detailed house data + Reviews
+- POST /api/houses           -> Create new listing (Multipart/Form-Data)
+- PATCH /api/houses/:id      -> Update details/Toggle status (Available/Taken)
+- DELETE /api/houses/:id     -> Listing removal
+
+[MARKETPLACE SERVICE]
+- GET  /api/items            -> Get items (with filters)
+- POST /api/items            -> Create new item listing
+- PATCH /api/items/:id       -> Update item status (Active/Sold)
+
+[NOTIFICATION SERVICE]
+- GET  /api/notifications    -> Fetch user-specific alerts
+- PATCH /api/notifications/:id -> Mark as read
+- DELETE /api/notifications/:id -> Remove alert
+
+[REVIEW/FEEDBACK SERVICE]
+- POST /api/reviews          -> Submit property review
+- POST /api/feedback         -> Submit platform feedback (Testimony)
+
+[ADMIN SERVICE]
+- POST /api/admin/broadcast  -> Send targeted notification
+- PATCH /api/admin/undo/:logId -> Undo recent admin action
+
+IV. BADGE ALLOCATION LOGIC (DATABASE TRIGGERS)
+----------------------------------------------
+
+1. 'Verified Resident/Owner': 
+   - Condition: `isVerified: true` (Triggered manually by Admin after document review).
+2. 'Superhost':
+   - Condition: `averageRating >= 4.5` AND `totalRatings >= 10`.
+3. 'Responsive':
+   - Condition: `avgResponseTime < 120` (minutes).
+4. 'Sponsored':
+   - Condition: `isSponsored: true` AND `sponsoredUntil > currentDate`.
+5. 'Pending':
+   - Condition: `listingStatus === 'pending'` (Internal flag for moderation queue).
+
+================================================================================
+END OF BLUEPRINT
+================================================================================
