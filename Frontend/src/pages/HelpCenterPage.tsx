@@ -54,6 +54,8 @@ const testimonials = [
     { name: "M. Maina", role: "Property Owner", comment: "Standardized forms help me present my units professionally to the right clients.", rating: 4 },
 ];
 
+import { BackButton } from '../components/ui/BackButton';
+
 export default function HelpCenterPage() {
     const navigate = useNavigate();
     const { toast } = useToast();
@@ -65,16 +67,13 @@ export default function HelpCenterPage() {
             {/* Header - Wishlist Style Arrangement */}
             <div className="bg-white px-6 py-8 border-b border-slate-100 mb-6">
                 <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={() => navigate(-1)}
-                            className="p-3 rounded-2xl bg-slate-50 hover:bg-white shadow-sm border border-slate-100 transition-all active:scale-95 text-[#0F3D91]"
-                        >
-                            <ArrowLeft className="w-5 h-5 font-bold" />
-                        </button>
-                        <div className="space-y-1">
-                            <h1 className="font-heading font-black text-2xl tracking-tight text-slate-900">Help Center</h1>
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#FF7A00]">V.1.1.1 Hub</p>
+                    <div className="flex flex-col gap-2">
+                        <BackButton />
+                        <div className="flex items-center gap-4">
+                            <div className="space-y-1">
+                                <h1 className="font-heading font-black text-2xl tracking-tight text-slate-900">Help Center</h1>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#FF7A00]">V.1.1.1 Hub</p>
+                            </div>
                         </div>
                     </div>
                     <div className="relative flex-1 max-w-md">

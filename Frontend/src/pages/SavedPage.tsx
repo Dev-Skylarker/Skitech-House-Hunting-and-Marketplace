@@ -11,6 +11,8 @@ import type { House, MarketplaceItem } from '@/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 
+import { BackButton } from '../components/ui/BackButton';
+
 export default function WishlistPage() {
   const navigate = useNavigate();
   const { favoriteHouses, favoriteItems, toggleFavoriteHouse, toggleFavoriteItem } = useFavorites();
@@ -53,12 +55,7 @@ export default function WishlistPage() {
   return (
     <div className="px-4 py-6 bg-[#F7F9FC] min-h-screen">
       <div className="flex items-center gap-3 mb-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 rounded-xl hover:bg-white shadow-sm border border-slate-100 transition-all active:scale-95"
-        >
-          <ArrowLeft className="w-5 h-5 text-slate-600" />
-        </button>
+        <BackButton />
         <h1 className="font-heading font-bold text-2xl">Wishlist</h1>
       </div>
       <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSelectedIds(new Set()); }}>

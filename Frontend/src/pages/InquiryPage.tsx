@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+import { BackButton } from '../components/ui/BackButton';
+
 const InquiryPage = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -37,13 +39,8 @@ const InquiryPage = () => {
                 <div className="absolute top-0 right-0 w-64 h-64 bg-[#0F3D91]/5 rounded-full -mr-32 -mt-32 blur-3xl opacity-50" />
                 <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#FF7A00]/5 rounded-full -ml-32 -mb-32 blur-3xl opacity-50" />
 
-                <div className="max-w-2xl mx-auto space-y-4 relative z-10">
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="flex items-center gap-1 text-slate-400 hover:text-[#0F3D91] transition-colors mx-auto text-xs font-bold uppercase tracking-widest mb-4"
-                    >
-                        <ArrowLeft className="w-3 h-3" /> Go Back
-                    </button>
+                <div className="max-w-2xl mx-auto space-y-4 relative z-10 flex flex-col items-center">
+                    <BackButton />
 
                     <h1 className="font-heading font-black text-[#0F3D91] text-3xl md:text-4xl leading-tight uppercase tracking-tighter">
                         Tell us what <span className="text-[#FF7A00]">you need</span>

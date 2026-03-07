@@ -44,7 +44,7 @@
     --input: 216 20% 90%;
     --ring: 218 82% 31%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -107,19 +107,24 @@
     background: linear-gradient(135deg, #0F3D91 0%, #0A2560 50%, #006994 100%);
   }
 
+  /* Tile Design - rounded-2xl */
+  .tile-card {
+    @apply bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300;
+  }
+
   /* CTA Button — Skitech Orange */
   .btn-cta {
-    @apply bg-[#FF7A00] hover:bg-orange-600 text-white font-black rounded-xl transition-all duration-200 shadow-lg hover:shadow-[#FF7A00]/30;
+    @apply bg-[#FF7A00] hover:bg-orange-600 text-white font-black rounded-2xl transition-all duration-200 shadow-lg hover:shadow-[#FF7A00]/30;
   }
 
   /* Primary Button — Deep Blue */
   .btn-primary {
-    @apply bg-[#0F3D91] hover:bg-[#0A2560] text-white font-bold rounded-xl transition-all duration-200 shadow-sm;
+    @apply bg-[#0F3D91] hover:bg-[#0A2560] text-white font-bold rounded-2xl transition-all duration-200 shadow-sm;
   }
 
   /* Card image aspect ratio */
   .card-image {
-    @apply aspect-video w-full object-cover rounded-xl;
+    @apply aspect-video w-full object-cover rounded-2xl;
   }
 
   /* Slider aspect ratio 3:1 */

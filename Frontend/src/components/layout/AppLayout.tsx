@@ -9,6 +9,8 @@ import { AdminSidebar } from './AdminSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
+import { DownloadBanner } from './DownloadBanner';
+
 export function AppLayout() {
   const { isAuthenticated, user } = useAuth();
   const location = useLocation();
@@ -16,9 +18,17 @@ export function AppLayout() {
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isHelpCenter = location.pathname === '/help';
   const isInquiry = location.pathname === '/inquiry';
+  const isHome = location.pathname === '/';
+
   const showFooter = !isAdminRoute && !isHelpCenter;
   const showBanner = showFooter && !isInquiry;
+  const showDownload = showFooter && isHome; // Show download banner on home or as part of global stack
+
   const [showFeedback, setShowFeedback] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     // Show feedback popup once per session after some delay
@@ -30,19 +40,13 @@ export function AppLayout() {
       }, 30000); // 30 seconds
       return () => clearTimeout(timer);
     }
-  }, [location, isAdminRoute, isHelpCenter, isAuthenticated]);
+  }, [location.pathname, isAdminRoute, isHelpCenter, isAuthenticated]);
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC] selection:bg-[#0F3D91] selection:text-white flex flex-col md:flex-row">
-      {isGlobalAdmin && <AdminSidebar />}
-      {/*
-        Global Content Buffer: pb-24 on mobile pushes the sheet bottom above the 
-        fixed BottomNav (z-index 50) so GlobalFooter is never obscured.
-      */}
+    <div className="min-h-screen bg-[#F7F9FC] selection:bg-[#0F3D91] selection:text-white flex flex-col">
       <div className={cn(
-        "mx-auto w-full min-h-screen flex flex-col relative overflow-x-hidden md:pb-0 flex-1",
-        !isGlobalAdmin && "pb-24 max-w-[1200px]",
-        isGlobalAdmin && "md:ml-64 max-w-[1600px] pb-24"
+        "mx-auto w-full min-h-screen flex flex-col relative overflow-x-hidden pb-24 flex-1",
+        isAdminRoute ? "max-w-[1600px]" : "max-w-[1200px]"
       )}>
         <TopNavbar />
 
@@ -56,12 +60,16 @@ export function AppLayout() {
             <Outlet />
           </main>
 
-          {/* Inquiry Banner + Global Footer - Integrated part of the sheet */}
-          {showBanner && <InquiryBanner />}
-          {showFooter && <GlobalFooter />}
+          {/* Safe Area Stack: Tiles (Footer) -> Download Banner -> Versioning */}
+          <div className="flex flex-col gap-0 mt-8">
+            {showBanner && <InquiryBanner />}
+            {showFooter && <GlobalFooter />}
+            {showDownload && <DownloadBanner />}
+          </div>
         </div>
 
-        {!isGlobalAdmin && <BottomNav />}
+        <BottomNav />
+
 
         <FeedbackPopup
           isOpen={showFeedback}

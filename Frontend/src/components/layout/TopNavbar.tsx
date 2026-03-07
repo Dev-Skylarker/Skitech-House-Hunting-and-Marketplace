@@ -1,14 +1,17 @@
 import { Search, Bell } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { motion } from 'framer-motion';
 
 export function TopNavbar() {
   const { unreadCount } = useNotifications();
 
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-100 rounded-b-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] px-6 py-5 sm:py-7 flex items-center justify-between mx-0">
-      <Link to="/" className="flex items-center gap-3 sm:gap-6">
+      <Link to={isAdminRoute ? "/admin" : "/"} className="flex items-center gap-3 sm:gap-6">
         {/* Animated Skitech Logo */}
         <motion.div
           initial={{ scale: 0.8, opacity: 0, rotate: -15 }}
@@ -38,7 +41,7 @@ export function TopNavbar() {
               Skitech.
             </span>
             <span className="font-heading font-bold text-slate-400 text-[10px] sm:text-[15px] tracking-wide leading-tight">
-              House-hunting <span className="text-[#FF7A00]">& Marketplace</span>
+              House-hunting <span className="text-[#FF7A00]">& marketplace</span>
             </span>
           </motion.div>
         </div>

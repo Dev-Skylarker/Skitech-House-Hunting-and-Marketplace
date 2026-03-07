@@ -57,10 +57,25 @@ II. NAVIGATION MAP & PERMISSIONS
 | /notifications       | Alerts              | Registered Users        |
 | /post-house          | List Property       | Property Owners (Verified)|
 | /post-item           | Sell Item           | Registered Users        |
-| /admin               | Control Center      | Admin Only              |
+| /admin               | Control Center (V2) | Admin Only              |
+| /forgot-password     | Password Reset      | Guest/All               |
 | /legal               | Legal & Info        | All                     |
 | /guide               | System Guide        | All                     |
 | /help                | Help Center         | All                     |
+
+IV. ADMIN V2 OPERATIONAL ARCHITECTURE
+------------------------------------
+
+1. Home: Omni-Search Hub for across-the-board entity discovery.
+2. Gatekeeper: Multi-layered approvals (Landlord, Property, Marketplace).
+3. Properties: Vacant/Occupied status management.
+4. Marketplace: SOLD item buffer (7-day lifecycle before purge).
+5. Requests & Leads: Automated matching engine for member needs.
+6. Membership: Role hierarchy management (Promote/Demote/Suspend).
+7. Trust & Safety: System reports & Manual/Auto Badge Allocation.
+8. Media Vault: Centralized asset gallery & compression tool.
+9. System Logs: Immutable security ledger with PDF export & Undo.
+10. UI Studio: Real-time marketing slider & system environment controls.
 
 * SYSTEM CONSTANTS:
   - BottomNav Height: ~64px (Base height + Icon + Label) + env(safe-area-inset-bottom).

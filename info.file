@@ -48,13 +48,17 @@ II. DATABASE GUIDE (MONGOOSE SCHEMAS)
    - media: { coverImg: String, gallery: [String] (Max: 3-4) }
    - status: String (Enum: 'active', 'sold', 'expired')
 
-4. Admin Log Schema (Activity Tracking):
-   - adminId: ObjectId (ref: User)
-   - actionType: String (Enum: 'approve_listing', 'reject_listing', 'verify_user', 'broadcast', 'suspend_user', etc.)
-   - targetId: String (The UUID of the affected entity)
-   - description: String
-   - canUndo: Boolean (default: true)
-   - timestamp: Date
+5. Admin V2 Tab Architecture:
+   - HOME: Omni-Search Hub (Users, Listings, Commands)
+   - GATEKEEPER: Approvals (Landlords, Houses, Items)
+   - PROPERTIES: Vacant/Occupied toggles
+   - MARKETPLACE: SOLD buffer management
+   - REQUESTS: Automated matching engine
+   - MEMBERSHIP: Role hierarchy (Promote/Demote)
+   - SAFETY: System reports & Badges
+   - VAULT: Centralized media assets
+   - LOGS: Activity ledger & PDF Export
+   - STUDIO: UI Configuration & Environment Toggles
 
 III. ENVIRONMENT KEYS (.env.REQUIRED)
 --------------------------------------
