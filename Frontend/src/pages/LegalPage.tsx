@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Shield, FileText, Info, ChevronRight, Scale } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,7 +8,20 @@ import { BackButton } from '../components/ui/BackButton';
 
 const LegalPage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [activeTab, setActiveTab] = useState('about');
+
+    // Set active tab based on route
+    useEffect(() => {
+        const path = location.pathname;
+        if (path === '/privacy') {
+            setActiveTab('privacy');
+        } else if (path === '/terms') {
+            setActiveTab('terms');
+        } else {
+            setActiveTab('about');
+        }
+    }, [location.pathname]);
 
     const tabs = [
         { id: 'about', label: 'About Us', icon: Info },

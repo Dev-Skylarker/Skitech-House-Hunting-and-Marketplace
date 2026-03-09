@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Building2, ArrowRight, Heart, Trash2, CheckSquare, Square, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Building2, ArrowRight, Heart, Trash2, CheckSquare, Square, ShoppingBag, Lock, Eye } from 'lucide-react';
 import { HouseCard } from '@/components/HouseCard';
 import { ItemCard } from '@/components/ItemCard';
 import { Button } from '@/components/ui/button';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useAuth } from '@/contexts/AuthContext';
 import { mockHouses, mockItems } from '@/services/api';
 import type { House, MarketplaceItem } from '@/types';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -16,6 +17,7 @@ import { BackButton } from '../components/ui/BackButton';
 export default function WishlistPage() {
   const navigate = useNavigate();
   const { favoriteHouses, favoriteItems, toggleFavoriteHouse, toggleFavoriteItem } = useFavorites();
+  const { isAuthenticated, user } = useAuth();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState('all');
 
@@ -45,6 +47,10 @@ export default function WishlistPage() {
   };
 
   const removeSelected = () => {
+    if (!isAuthenticated) {
+      navigate('/account');
+      return;
+    }
     selectedIds.forEach(id => {
       if (favoriteHouses.includes(id)) toggleFavoriteHouse(id);
       if (favoriteItems.includes(id)) toggleFavoriteItem(id);
@@ -83,7 +89,23 @@ export default function WishlistPage() {
           )}
         </div>
 
-        {selectedIds.size > 0 && (
+        {!isAuthenticated && totalSaved > 0 && (
+          <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl mb-6 flex items-center gap-3">
+            <Lock className="w-5 h-5 text-amber-600" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-amber-900">Sign in to manage your wishlist</p>
+              <p className="text-xs text-amber-700 mt-1">Login to view details and remove items from your wishlist</p>
+            </div>
+            <Button
+              onClick={() => navigate('/account')}
+              className="bg-amber-600 hover:bg-amber-700 text-white rounded-xl h-9 px-4 font-medium text-sm"
+            >
+              Sign In
+            </Button>
+          </div>
+        )}
+
+        {selectedIds.size > 0 && isAuthenticated && (
           <div className="bg-[#0F3D91] text-white p-3 rounded-2xl mb-6 flex items-center justify-between shadow-lg shadow-blue-900/10 animate-in slide-in-from-top-2">
             <div className="flex items-center gap-3 ml-2">
               <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm">
@@ -113,19 +135,32 @@ export default function WishlistPage() {
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                     {savedHouses.map(h => (
                       <div key={h.id} className="relative group">
-                        <div className="absolute top-3 left-3 z-10">
-                          <Checkbox
-                            checked={selectedIds.has(h.id)}
-                            onCheckedChange={() => toggleSelect(h.id)}
-                            className="w-5 h-5 rounded-md border-white/50 bg-white/20 backdrop-blur-md data-[state=checked]:bg-[#FF7A00] data-[state=checked]:border-[#FF7A00]"
+                        {isAuthenticated && (
+                          <div className="absolute top-3 left-3 z-10">
+                            <Checkbox
+                              checked={selectedIds.has(h.id)}
+                              onCheckedChange={() => toggleSelect(h.id)}
+                              className="w-5 h-5 rounded-md border-white/50 bg-white/20 backdrop-blur-md data-[state=checked]:bg-[#FF7A00] data-[state=checked]:border-[#FF7A00]"
+                            />
+                          </div>
+                        )}
+                        <div className={cn(!isAuthenticated && "relative")}>
+                          <HouseCard
+                            house={h}
+                            isFavorite
+                            onToggleFavorite={isAuthenticated ? toggleFavoriteHouse : undefined}
+                            size="base"
+                            showDetails={isAuthenticated}
                           />
+                          {!isAuthenticated && (
+                            <div className="absolute inset-0 bg-black/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                              <div className="bg-white/95 rounded-xl p-3 flex items-center gap-2 shadow-lg">
+                                <Eye className="w-4 h-4 text-amber-600" />
+                                <span className="text-xs font-medium text-amber-900">Sign in to view</span>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <HouseCard
-                          house={h}
-                          isFavorite
-                          onToggleFavorite={toggleFavoriteHouse}
-                          size="base"
-                        />
                       </div>
                     ))}
                   </div>
@@ -141,19 +176,32 @@ export default function WishlistPage() {
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
                     {savedItems.map(i => (
                       <div key={i.id} className="relative group">
-                        <div className="absolute top-3 left-3 z-10">
-                          <Checkbox
-                            checked={selectedIds.has(i.id)}
-                            onCheckedChange={() => toggleSelect(i.id)}
-                            className="w-5 h-5 rounded-md border-white/50 bg-white/20 backdrop-blur-md data-[state=checked]:bg-[#FF7A00] data-[state=checked]:border-[#FF7A00]"
+                        {isAuthenticated && (
+                          <div className="absolute top-3 left-3 z-10">
+                            <Checkbox
+                              checked={selectedIds.has(i.id)}
+                              onCheckedChange={() => toggleSelect(i.id)}
+                              className="w-5 h-5 rounded-md border-white/50 bg-white/20 backdrop-blur-md data-[state=checked]:bg-[#FF7A00] data-[state=checked]:border-[#FF7A00]"
+                            />
+                          </div>
+                        )}
+                        <div className={cn(!isAuthenticated && "relative")}>
+                          <ItemCard
+                            item={i}
+                            isFavorite
+                            onToggleFavorite={isAuthenticated ? toggleFavoriteItem : undefined}
+                            size="base"
+                            showDetails={isAuthenticated}
                           />
+                          {!isAuthenticated && (
+                            <div className="absolute inset-0 bg-black/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                              <div className="bg-white/95 rounded-xl p-3 flex items-center gap-2 shadow-lg">
+                                <Eye className="w-4 h-4 text-amber-600" />
+                                <span className="text-xs font-medium text-amber-900">Sign in to view</span>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <ItemCard
-                          item={i}
-                          isFavorite
-                          onToggleFavorite={toggleFavoriteItem}
-                          size="base"
-                        />
                       </div>
                     ))}
                   </div>
@@ -169,19 +217,32 @@ export default function WishlistPage() {
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
               {savedHouses.map(h => (
                 <div key={h.id} className="relative group">
-                  <div className="absolute top-3 left-3 z-10">
-                    <Checkbox
-                      checked={selectedIds.has(h.id)}
-                      onCheckedChange={() => toggleSelect(h.id)}
-                      className="w-5 h-5 rounded-md border-white/50 bg-white/20 backdrop-blur-md data-[state=checked]:bg-[#FF7A00] data-[state=checked]:border-[#FF7A00]"
+                  {isAuthenticated && (
+                    <div className="absolute top-3 left-3 z-10">
+                      <Checkbox
+                        checked={selectedIds.has(h.id)}
+                        onCheckedChange={() => toggleSelect(h.id)}
+                        className="w-5 h-5 rounded-md border-white/50 bg-white/20 backdrop-blur-md data-[state=checked]:bg-[#FF7A00] data-[state=checked]:border-[#FF7A00]"
+                      />
+                    </div>
+                  )}
+                  <div className={cn(!isAuthenticated && "relative")}>
+                    <HouseCard
+                      house={h}
+                      isFavorite
+                      onToggleFavorite={isAuthenticated ? toggleFavoriteHouse : undefined}
+                      size="base"
+                      showDetails={isAuthenticated}
                     />
+                    {!isAuthenticated && (
+                      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                        <div className="bg-white/95 rounded-xl p-3 flex items-center gap-2 shadow-lg">
+                          <Eye className="w-4 h-4 text-amber-600" />
+                          <span className="text-xs font-medium text-amber-900">Sign in to view</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <HouseCard
-                    house={h}
-                    isFavorite
-                    onToggleFavorite={toggleFavoriteHouse}
-                    size="base"
-                  />
                 </div>
               ))}
             </div>
@@ -194,19 +255,32 @@ export default function WishlistPage() {
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
               {savedItems.map(i => (
                 <div key={i.id} className="relative group">
-                  <div className="absolute top-3 left-3 z-10">
-                    <Checkbox
-                      checked={selectedIds.has(i.id)}
-                      onCheckedChange={() => toggleSelect(i.id)}
-                      className="w-5 h-5 rounded-md border-white/50 bg-white/20 backdrop-blur-md data-[state=checked]:bg-[#FF7A00] data-[state=checked]:border-[#FF7A00]"
+                  {isAuthenticated && (
+                    <div className="absolute top-3 left-3 z-10">
+                      <Checkbox
+                        checked={selectedIds.has(i.id)}
+                        onCheckedChange={() => toggleSelect(i.id)}
+                        className="w-5 h-5 rounded-md border-white/50 bg-white/20 backdrop-blur-md data-[state=checked]:bg-[#FF7A00] data-[state=checked]:border-[#FF7A00]"
+                      />
+                    </div>
+                  )}
+                  <div className={cn(!isAuthenticated && "relative")}>
+                    <ItemCard
+                      item={i}
+                      isFavorite
+                      onToggleFavorite={isAuthenticated ? toggleFavoriteItem : undefined}
+                      size="base"
+                      showDetails={isAuthenticated}
                     />
+                    {!isAuthenticated && (
+                      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                        <div className="bg-white/95 rounded-xl p-3 flex items-center gap-2 shadow-lg">
+                          <Eye className="w-4 h-4 text-amber-600" />
+                          <span className="text-xs font-medium text-amber-900">Sign in to view</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <ItemCard
-                    item={i}
-                    isFavorite
-                    onToggleFavorite={toggleFavoriteItem}
-                    size="base"
-                  />
                 </div>
               ))}
             </div>

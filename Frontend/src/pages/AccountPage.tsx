@@ -16,7 +16,7 @@ import { useNotifications } from '@/contexts/NotificationContext';
 import { toast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import type { UserType, House, MarketplaceItem } from '@/types';
-import { mockHouses, mockItems } from '@/services/api';
+import { api } from '@/services/api';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -63,7 +63,7 @@ const BADGE_INFO: Record<string, { icon: any; color: string; description: string
 
 // ============= GUEST USER VIEW =============
 function GuestView() {
-  const { login, register } = useAuth();
+  const { login, register, loginWithGoogle } = useAuth();
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [regName, setRegName] = useState('');
@@ -143,34 +143,23 @@ function GuestView() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-[#F7F9FC] flex flex-col">
-      {/* Premium Hero Header */}
-      <div className="relative h-48 overflow-hidden">
-        {/* Background Image */}
-        <img
-          src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=1200"
-          alt="Modern House"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        {/* Faded Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/40 to-secondary/80" />
-
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 z-10">
-          <h1 className="font-heading font-bold text-2xl sm:text-3xl text-white mb-2 drop-shadow-md">
-            Unlock More with Your Account
-          </h1>
-          <p className="text-sm text-white/95 max-w-[320px] leading-snug drop-shadow-sm">
-            Sign in/signup to view verified houses, explore the marketplace, and access your dashboard
-          </p>
+      {/* Profile Icon Header */}
+      <div className="flex flex-col items-center py-8 px-4">
+        <div className="w-20 h-20 bg-[#0F3D91] rounded-full flex items-center justify-center mb-4 shadow-lg">
+          <User className="w-10 h-10 text-white" />
         </div>
+        <h1 className="font-heading font-semibold text-2xl text-center mb-2">
+          Access Your Account
+        </h1>
       </div>
 
       {/* Content */}
-      <div className="flex-1 px-4 py-6">
+      <div className="flex-1 px-4 pb-6">
         <div className="max-w-sm mx-auto">
 
           {/* Tab Selector */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-6">
-            <TabsList className="grid grid-cols-2 w-full bg-muted/60 rounded-lg p-1 h-11">
+            <TabsList className="grid grid-cols-2 w-full bg-muted/60 rounded-lg p-1 h-14">
               <TabsTrigger
                 value="login"
                 className="rounded-md text-sm data-[state=active]:bg-white data-[state=active]:text-[#0F3D91] data-[state=active]:shadow-sm"
@@ -181,7 +170,7 @@ function GuestView() {
                 value="register"
                 className="rounded-md text-sm data-[state=active]:bg-white data-[state=active]:text-[#0F3D91] data-[state=active]:shadow-sm"
               >
-                Create Account
+                Sign Up
               </TabsTrigger>
             </TabsList>
 
@@ -221,7 +210,7 @@ function GuestView() {
                   </form>
 
                   {/* Login Footer Text */}
-                  <div className="text-center pt-2">
+                  <div className="text-center pt-2 space-y-2">
                     <p className="text-[11px] text-muted-foreground">
                       Forgot password?{' '}
                       <button
@@ -254,7 +243,12 @@ function GuestView() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => console.log('Google sign-in placeholder')}
+                      onClick={async () => {
+                        const success = await loginWithGoogle();
+                        if (success) {
+                          // Google sign-in successful, auth state change listener will handle the rest
+                        }
+                      }}
                       className="w-full h-11 rounded-lg border border-border bg-card hover:bg-muted transition-colors flex items-center justify-center gap-2 text-sm font-semibold"
                     >
                       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -265,22 +259,6 @@ function GuestView() {
                       </svg>
                       Continue with Google
                     </button>
-                  </div>
-                  <div className="mt-6 pt-4 border-t border-border/50">
-                    <p className="text-[11px] text-muted-foreground font-medium mb-2">
-                      Dev Hints (Testing):
-                    </p>
-                    <div className="space-y-1 bg-muted/40 p-3 rounded-lg">
-                      <p className="text-[11px] text-muted-foreground font-mono">
-                        <strong>Tenant:</strong> alice@example.com
-                      </p>
-                      <p className="text-[11px] text-muted-foreground font-mono">
-                        <strong>Landlord:</strong> john@example.com
-                      </p>
-                      <p className="text-[11px] text-muted-foreground font-mono">
-                        <strong>Admin:</strong> admin@skitech.co.ke
-                      </p>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -465,6 +443,17 @@ function GuestView() {
                       >
                         Create Account
                       </Button>
+                      
+                      <p className="text-center text-sm text-muted-foreground">
+                        Already have an account?{' '}
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('login')}
+                          className="text-[#0F3D91] font-medium hover:text-[#0A2560] underline-offset-4 hover:underline transition-colors"
+                        >
+                          Login here
+                        </button>
+                      </p>
                     </form>
                   )}
 
@@ -480,7 +469,14 @@ function GuestView() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => console.log('Google sign-up with role:', selectedRole)}
+                      onClick={async () => {
+                        // Store the selected role in localStorage for Google sign-up
+                        localStorage.setItem('google_signup_role', selectedRole);
+                        const success = await loginWithGoogle();
+                        if (success) {
+                          // Google sign-up successful, auth state change listener will handle the rest
+                        }
+                      }}
                       className="w-full h-11 rounded-lg border border-border bg-card hover:bg-muted transition-colors flex items-center justify-center gap-2 text-sm font-semibold"
                     >
                       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -731,12 +727,28 @@ function SupportTab() {
 // ============= LISTING MANAGEMENT =============
 function ListingManagement({ user }: { user: any }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [houses, setHouses] = useState<House[]>(() =>
-    mockHouses.filter(h => h.landlordId === user.id || h.landlordName === user.name)
-  );
-  const [items, setItems] = useState<MarketplaceItem[]>(() =>
-    mockItems.filter(i => i.sellerName === user.name)
-  );
+  const [houses, setHouses] = useState<House[]>([]);
+  const [items, setItems] = useState<MarketplaceItem[]>([]);
+
+  useEffect(() => {
+    // Load user's listings
+    const loadListings = async () => {
+      try {
+        const allHouses = await api.getHouses();
+        const allItems = await api.getItems();
+        
+        const userHouses = allHouses.filter(h => h.landlordId === user.id || h.landlordName === user.name);
+        const userItems = allItems.filter(i => i.sellerName === user.name);
+        
+        setHouses(userHouses);
+        setItems(userItems);
+      } catch (error) {
+        console.error('Failed to load listings:', error);
+      }
+    };
+
+    loadListings();
+  }, [user]);
 
   const activeSubTab = (searchParams.get('subtab') as 'houses' | 'items') ||
     (user.userType === 'landlord' ? 'houses' : 'items');
@@ -1231,6 +1243,10 @@ function Dashboard({ user, logout }: { user: any; logout: () => void }) {
       navigate('/admin');
       return;
     }
+    if (tab === 'profile') {
+      navigate('/profile');
+      return;
+    }
     newParams.set('tab', tab);
     // When changing main tab, clear subtab unless we stay on listings
     if (tab !== 'listings') newParams.delete('subtab');
@@ -1245,6 +1261,7 @@ function Dashboard({ user, logout }: { user: any; logout: () => void }) {
   const navItems = [
     { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'listings', label: 'My Listings', icon: ShoppingBag, roles: ['landlord', 'user'] },
+    { id: 'profile', label: 'My Profile', icon: User },
     { id: 'landlord-profile', label: 'Business Profile', icon: Award, roles: ['landlord'] },
     { id: 'history', label: 'History', icon: History },
     { id: 'admin', label: 'Admin Panel', icon: Shield, roles: ['admin'] },

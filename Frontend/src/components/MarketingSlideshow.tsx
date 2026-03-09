@@ -102,7 +102,7 @@ export function MarketingSlideshow({ slides, to, autoplayInterval = 5000, delay 
                                 initial={{ y: 20, opacity: 0 }}
                                 animate={{ y: 0, opacity: 1 }}
                                 transition={{ delay: 0.2, duration: 0.5 }}
-                                className="text-lg sm:text-2xl md:text-3xl font-heading font-black mb-2 leading-tight max-w-[85%] uppercase tracking-tighter"
+                                className="text-lg sm:text-2xl md:text-3xl font-heading font-medium mb-2 leading-[1.1] max-w-[85%] relative z-10 min-h-[60px]"
                             >
                                 {currentSlide.title}
                             </motion.h2>
@@ -110,7 +110,7 @@ export function MarketingSlideshow({ slides, to, autoplayInterval = 5000, delay 
                                 initial={{ y: 20, opacity: 0 }}
                                 animate={{ y: 0, opacity: 1 }}
                                 transition={{ delay: 0.3, duration: 0.5 }}
-                                className="text-[11px] sm:text-base font-heading font-bold text-white/90 max-w-[80%] leading-snug tracking-tight"
+                                className="text-[11px] sm:text-base font-heading font-semibold text-white/90 max-w-[80%] leading-snug"
                             >
                                 {currentSlide.subtitle}
                             </motion.p>

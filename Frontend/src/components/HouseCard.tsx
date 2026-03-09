@@ -1,10 +1,17 @@
 import { useState } from 'react';
-import { Heart, MapPin, Eye } from 'lucide-react';
+import { Heart, MapPin, Eye, MoreHorizontal, Edit, EyeOff, Trash2, Share2, Flag, Phone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthGateDialog } from '@/components/auth/AuthGateDialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import type { House } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -14,13 +21,33 @@ interface Props {
   onToggleFavorite?: (id: string) => void;
   size?: 'sm' | 'base';
   layout?: 'grid' | 'list';
+  showDetails?: boolean;
+  onEdit?: (house: House) => void;
+  onHide?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onShare?: (house: House) => void;
+  onReport?: (house: House) => void;
+  onContact?: (house: House) => void;
 }
 
-export function HouseCard({ house, isFavorite, onToggleFavorite, size = 'sm', layout = 'grid' }: Props) {
+export function HouseCard({ 
+  house, 
+  isFavorite, 
+  onToggleFavorite, 
+  size = 'sm', 
+  layout = 'grid', 
+  showDetails = true,
+  onEdit,
+  onHide,
+  onDelete,
+  onShare,
+  onReport,
+  onContact
+}: Props) {
   const isBase = size === 'base';
   const isList = layout === 'list';
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [showAuthGate, setShowAuthGate] = useState(false);
 
   const handleDetailsClick = (e?: React.MouseEvent) => {
@@ -34,11 +61,52 @@ export function HouseCard({ house, isFavorite, onToggleFavorite, size = 'sm', la
     }
   };
 
+  const handleEdit = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onEdit?.(house);
+  };
+
+  const handleHide = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onHide?.(house.id);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDelete?.(house.id);
+  };
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onShare?.(house);
+  };
+
+  const handleReport = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onReport?.(house);
+  };
+
+  const handleContact = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onContact?.(house);
+  };
+
+  // Check if user is owner or admin
+  const isOwner = user?.id === house.landlordId || user?.email === house.landlordName.toLowerCase().replace(' ', '.');
+  const isAdmin = user?.role === 'admin';
+  const canManage = isOwner || isAdmin;
+
   return (
     <>
       <div
-        onClick={() => handleDetailsClick()}
-        className={cn("block group cursor-pointer h-full", isList ? "w-full" : "")}
+        onClick={showDetails ? handleDetailsClick : undefined}
+        className={cn("block group h-full", showDetails ? "cursor-pointer" : "cursor-default", isList ? "w-full" : "")}
       >
         <div className={cn(
           "bg-card rounded-xl border border-border/60 overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full flex",
@@ -71,6 +139,55 @@ export function HouseCard({ house, isFavorite, onToggleFavorite, size = 'sm', la
                 />
               </button>
             )}
+            <div className="absolute top-2 right-12 flex gap-1">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    className="p-1.5 rounded-full bg-black/55 text-white backdrop-blur-sm hover:bg-black/70 transition-colors shadow-sm"
+                  >
+                    <MoreHorizontal className={cn(isBase ? 'w-4.5 h-4.5' : 'w-4 h-4')} />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {canManage && (
+                    <>
+                      <DropdownMenuItem onClick={handleEdit}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit Property
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleHide}>
+                        <EyeOff className="mr-2 h-4 w-4" />
+                        Hide Property
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  <DropdownMenuItem onClick={handleShare}>
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share Property
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleContact}>
+                    <Phone className="mr-2 h-4 w-4" />
+                    Contact Owner
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleReport} className="text-red-600">
+                    <Flag className="mr-2 h-4 w-4" />
+                    Report Property
+                  </DropdownMenuItem>
+                  {canManage && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleDelete} className="text-red-600">
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete Property
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
             {isList && (
               <Badge
                 variant="outline"
@@ -118,7 +235,7 @@ export function HouseCard({ house, isFavorite, onToggleFavorite, size = 'sm', la
               </div>
             )}
 
-            {!isList && (
+            {!isList && showDetails && (
               <div className="pt-2.5">
                 <Button
                   onClick={handleDetailsClick}
@@ -132,7 +249,7 @@ export function HouseCard({ house, isFavorite, onToggleFavorite, size = 'sm', la
               </div>
             )}
           </div>
-          {isList && (
+          {isList && showDetails && (
             <div className="pr-4 py-4 self-center hidden sm:block">
               <Button
                 onClick={handleDetailsClick}

@@ -1,15 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, MapPin, Phone, MessageCircle, ChevronLeft, ChevronRight, Shield, Droplets, Zap, Wifi, Car, Sofa, Star, Flag } from 'lucide-react';
+import { ArrowLeft, Heart, MapPin, Phone, MessageCircle, ChevronLeft, ChevronRight, Shield, Droplets, Zap, Wifi, Car, Sofa, Star, Flag, Send, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { HouseCard } from '@/components/HouseCard';
 import { RatingModal } from '@/components/RatingModal';
 import { useFavorites } from '@/hooks/useFavorites';
-import { api, mockHouses, mockUsers } from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
+import { apiService } from '@/services/apiService';
+import { emailjsService } from '@/services/emailjsService';
+import { mockHouses, mockUsers } from '@/services/api';
 import type { House, HouseRating } from '@/types';
 import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
 
 const amenityIcons: Record<string, React.ReactNode> = {
   Water: <Droplets className="w-4 h-4" />, Electricity: <Zap className="w-4 h-4" />,
@@ -24,7 +30,11 @@ export default function HouseDetailsPage() {
   const [imgIdx, setImgIdx] = useState(0);
   const [ratings, setRatings] = useState<HouseRating[]>([]);
   const [showRatingModal, setShowRatingModal] = useState(false);
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [contactMessage, setContactMessage] = useState('');
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const { favoriteHouses, toggleFavoriteHouse } = useFavorites();
+  const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (house && house.images.length > 1) {
@@ -37,16 +47,83 @@ export default function HouseDetailsPage() {
 
   useEffect(() => {
     if (id) {
-      api.getHouseById(id).then(setHouse);
-      api.getRatingsForHouse(id).then(setRatings);
+      apiService.houses.getHouse(id).then(response => {
+        if (response.success) {
+          setHouse(response.listing);
+        }
+      });
+      // TODO: Implement ratings API
+      // apiService.houses.getRatings(id).then(response => {
+      //   if (response.success) {
+      //     setRatings(response.ratings);
+      //   }
+      // });
     }
   }, [id]);
 
   const handleSubmitRating = async (rating: number, landlordRating: number, review: string) => {
-    if (house?.id) {
-      await api.addRating(house.id, 'u_current_user', rating, landlordRating, review);
-      const updated = await api.getRatingsForHouse(house.id);
-      setRatings(updated);
+    // TODO: Implement ratings API
+    console.log('Rating submitted:', { rating, landlordRating, review });
+    // if (house?.id) {
+    //   await apiService.ratings.addRating(house.id, 'u_current_user', rating, landlordRating, review);
+    //   const updated = await apiService.ratings.getRatingsForHouse(house.id);
+    //   setRatings(updated);
+    // }
+  };
+
+  const handleSendPropertyInquiry = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Login Required",
+        description: "Please login to send property inquiries.",
+        variant: "destructive",
+      });
+      navigate('/account');
+      return;
+    }
+
+    if (!house || !contactMessage.trim()) {
+      toast({
+        title: "Message Required",
+        description: "Please enter a message before sending.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSendingEmail(true);
+    
+    try {
+      const response = await emailjsService.sendPropertyLeadEmail(
+        house.title,
+        user?.name || 'Anonymous User',
+        user?.email || 'no-email@example.com',
+        contactMessage
+      );
+
+      if (response.success) {
+        toast({
+          title: "Inquiry Sent!",
+          description: "Your property inquiry has been sent to the landlord.",
+        });
+        setContactMessage('');
+        setShowContactForm(false);
+      } else {
+        toast({
+          title: "Failed to Send",
+          description: response.error || "Please try again later.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Email sending error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send inquiry. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingEmail(false);
     }
   };
 
@@ -292,17 +369,25 @@ export default function HouseDetailsPage() {
               )}
 
               {/* Contact Buttons */}
-              <div className="flex gap-2 pt-2">
-                <Button asChild className="flex-1 bg-secondary hover:bg-secondary/90 h-9">
-                  <a href={`https://wa.me/${house.whatsapp.replace('+', '')}?text=${encodeURIComponent(`Hello, I got your contact from Skitech, and would like more details about: ${house.title}`)}`} target="_blank" rel="noopener noreferrer">
-                    <MessageCircle className="w-4 h-4 mr-1" /> WhatsApp
-                  </a>
+              <div className="flex flex-col gap-2 pt-2">
+                <Button 
+                  onClick={() => setShowContactForm(true)}
+                  className="w-full bg-[#0F3D91] hover:bg-[#0F3D91]/90 h-9"
+                >
+                  <Send className="w-4 h-4 mr-1" /> Request to View
                 </Button>
-                <Button asChild variant="outline" className="flex-1 h-9">
-                  <a href={`tel:${house.phone}`}>
-                    <Phone className="w-4 h-4 mr-1" /> Call
-                  </a>
-                </Button>
+                <div className="flex gap-2">
+                  <Button asChild className="flex-1 bg-secondary hover:bg-secondary/90 h-9">
+                    <a href={`https://wa.me/${house.whatsapp.replace('+', '')}?text=${encodeURIComponent(`Hello, I got your contact from Skitech, and would like more details about: ${house.title}`)}`} target="_blank" rel="noopener noreferrer">
+                      <MessageCircle className="w-4 h-4 mr-1" /> WhatsApp
+                    </a>
+                  </Button>
+                  <Button asChild variant="outline" className="flex-1 h-9">
+                    <a href={`tel:${house.phone}`}>
+                      <Phone className="w-4 h-4 mr-1" /> Call
+                    </a>
+                  </Button>
+                </div>
               </div>
 
               {/* Report Link */}
@@ -356,6 +441,79 @@ export default function HouseDetailsPage() {
           onClose={() => setShowRatingModal(false)}
           onSubmit={handleSubmitRating}
         />
+      )}
+
+      {/* Contact Form Modal */}
+      {showContactForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-heading font-bold text-lg">Request to View Property</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowContactForm(false)}
+                className="h-8 w-8 p-0"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Property</p>
+                <p className="font-medium">{house.title}</p>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Landlord</p>
+                <p className="font-medium">{house.landlordName}</p>
+              </div>
+
+              <div>
+                <label htmlFor="message" className="text-sm font-medium text-muted-foreground mb-1 block">
+                  Your Message *
+                </label>
+                <Textarea
+                  id="message"
+                  placeholder="Hi, I'm interested in viewing this property. Please let me know when it's available for viewing..."
+                  value={contactMessage}
+                  onChange={(e) => setContactMessage(e.target.value)}
+                  rows={4}
+                  className="resize-none"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowContactForm(false)}
+                  className="flex-1"
+                  disabled={isSendingEmail}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSendPropertyInquiry}
+                  disabled={isSendingEmail || !contactMessage.trim()}
+                  className="flex-1 bg-[#0F3D91] hover:bg-[#0F3D91]/90"
+                >
+                  {isSendingEmail ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-1" />
+                      Send Inquiry
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

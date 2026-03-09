@@ -6,7 +6,8 @@ import {
   ShieldAlert, Zap, Send, ShieldCheck, UserPlus, Image as ImageIcon,
   FileText, Download, Trash2, Power, Pause, Play, RefreshCcw,
   Filter, ChevronRight, Check, X, Shield, Star, Briefcase,
-  TrendingUp, Activity, Lock, Unlock, Mail, Phone, MapPin
+  TrendingUp, Activity, Lock, Unlock, Mail, Phone, MapPin, Sun, Moon,
+  Menu, X as CloseIcon
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,37 +21,54 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   LineChart, Line, AreaChart, Area, Cell, PieChart, Pie
 } from 'recharts';
-import { api, mockHouses, mockItems, mockUsers } from '@/services/api';
+import { api } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuTrigger, DropdownMenuSeparator
-} from "@/components/ui/dropdown-menu";
-import { jsPDF } from 'jspdf';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import jsPDF from 'jspdf';
 import { cn } from '@/lib/utils';
 
-// Mock data for new features
+// Mock data
+const mockHouses = [
+  { id: '1', title: 'Modern Apartment near Campus', verified: true },
+  { id: '2', title: 'Cozy Bedsitter in Town', verified: false },
+  { id: '3', title: 'Spacious 2-Bedroom House', verified: true },
+];
+
+const mockUsers = [
+  { id: '1', name: 'Alice Cooper', email: 'alice@example.com' },
+  { id: '2', name: 'Bob Marley', email: 'bob@example.com' },
+  { id: '3', name: 'Charlie Brown', email: 'charlie@example.com' },
+];
+
+const marketplaceItems = [
+  { id: '1', title: 'Study Desk', category: 'Furniture' },
+  { id: '2', title: 'Laptop Stand', category: 'Electronics' },
+  { id: '3', title: 'Office Chair', category: 'Furniture' },
+];
+
 const systemLogs = [
-  { id: 'log-1', admin: 'Admin Chief', action: 'Approved Landlord', target: '#USR-102', time: '2026-03-07T08:30:00Z', type: 'user', canUndo: true },
-  { id: 'log-2', admin: 'Admin Chief', action: 'Suspended Listing', target: '#HS-9021', time: '2026-03-07T09:15:00Z', type: 'house', canUndo: true },
-  { id: 'log-3', admin: 'Admin Chief', action: 'Cleared Logs', target: 'System', time: '2026-03-07T10:00:00Z', type: 'system', canUndo: false },
+  { id: '1', action: 'User Login', target: 'user-123', admin: 'System', time: new Date().toISOString(), type: 'user' },
+  { id: '2', action: 'Property Added', target: 'house-456', admin: 'Admin', time: new Date().toISOString(), type: 'house' },
+  { id: '3', action: 'Marketplace Item Created', target: 'item-789', admin: 'System', time: new Date().toISOString(), type: 'marketplace' },
+  { id: '4', action: 'User Suspended', target: 'user-321', admin: 'Admin', time: new Date().toISOString(), type: 'user' },
+  { id: '5', action: 'Property Verified', target: 'house-654', admin: 'System', time: new Date().toISOString(), type: 'house' },
 ];
 
 const reports = [
-  { id: 'rep-1', user: 'Jane Doe', reason: 'Misleading price', target: '#HS-9005', status: 'pending', date: '2026-03-06' },
-  { id: 'rep-2', user: 'John Smith', reason: 'Unresponsive seller', target: '#ITEM-042', status: 'resolved', date: '2026-03-05' },
+  { id: '1', reason: 'Inappropriate Content', target: 'user-123', user: 'reporter-456', date: '2026-03-08', status: 'pending' },
+  { id: '2', reason: 'Fake Listing', target: 'house-789', user: 'reporter-321', date: '2026-03-07', status: 'resolved' },
+  { id: '3', reason: 'Harassment', target: 'user-654', user: 'reporter-987', date: '2026-03-06', status: 'pending' },
 ];
-
-const marketplaceItems = mockItems.map((item, i) => ({
-  ...item,
-  uuid: `#ITEM-${i + 100}`,
-  internalStatus: item.status === 'sold' ? 'buffer' : 'active',
-  soldAt: item.status === 'sold' ? '2026-03-05T12:00:00Z' : null
-}));
 
 const houseRequests = [
   { id: 'req-1', user: 'Alice Cooper', type: 'Single Room', budget: 'KSh 8,000', location: 'Near Gate B', matchedId: null },
@@ -61,31 +79,44 @@ export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  // Tab Management via URL
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeMainTab = searchParams.get('tab') || 'home';
-  const setActiveMainTab = (tab: string) => setSearchParams({ tab });
-
-  const [activeGatekeeperTab, setActiveGatekeeperTab] = useState('landlords');
-
-  // Core Data States
-  const [housesList, setHousesList] = useState<any[]>(
-    mockHouses.map((h, i) => ({ ...h, uuid: `#HS-${9000 + i}`, internalStatus: h.verified ? 'active' : 'pending' }))
-  );
-  const [usersList, setUsersList] = useState<any[]>(
-    mockUsers.map((u, i) => ({ ...u, uuid: `#USR-2026-${String(i + 1).padStart(3, '0')}`, isSuperhost: false }))
-  );
-  const [itemsList, setItemsList] = useState<any[]>(marketplaceItems);
-  const [logs, setLogs] = useState<any[]>(systemLogs);
-  const [requests, setRequests] = useState<any[]>(houseRequests);
-
-  // Search
+  const [activeMainTab, setActiveMainTab] = useState('dashboard');
   const [omniSearch, setOmniSearch] = useState('');
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
+  const [logs, setLogs] = useState(systemLogs);
 
-  // Modals / Details
-  const [selectedEntity, setSelectedEntity] = useState<any>(null);
-  const [entityType, setEntityType] = useState<string | null>(null);
+  // Sidebar navigation items
+  const sidebarItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'users', label: 'Users', icon: Users },
+    { id: 'properties', label: 'Properties', icon: Building2 },
+    { id: 'marketplace', label: 'Marketplace', icon: ShoppingBag },
+    { id: 'trust-safety', label: 'Trust & Safety', icon: ShieldAlert },
+    { id: 'media-vault', label: 'Media Vault', icon: ImageIcon },
+    { id: 'reports', label: 'Reports', icon: FileText },
+    { id: 'system-logs', label: 'System Logs', icon: Activity },
+    { id: 'settings', label: 'Settings', icon: Settings },
+  ];
+
+  const handleLogout = () => {
+    logout();
+    navigate('/account');
+  };
+
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+    // In a real app, this would toggle a theme context
+  };
+
+  // Initialize data
+  const [housesList] = useState<any[]>(
+    mockHouses.map((h, i) => ({ ...h, uuid: `#HS-${9000 + i}`, internalStatus: h.verified ? 'approved' : 'pending' }))
+  );
+  const [usersList] = useState<any[]>(
+    mockUsers.map((u, i) => ({ ...u, uuid: `#USR-${100 + i}`, internalStatus: i % 3 === 0 ? 'pending' : i % 2 === 0 ? 'approved' : 'suspended' }))
+  );
+  const [itemsList] = useState<any[]>(marketplaceItems);
 
   // System Settings
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
@@ -136,7 +167,7 @@ export default function AdminDashboard() {
   const filteredItems = itemsList.filter(i => i.title.toLowerCase().includes(omniSearch.toLowerCase()) || i.uuid.toLowerCase().includes(omniSearch.toLowerCase()));
 
   // Component Helpers
-  const StatCard = ({ title, value, icon: Icon, colorClass, desc }: any) => (
+  const StatCard = ({ title, value, icon: Icon, colorClass, desc, trend }: any) => (
     <Card className="border-none shadow-sm rounded-2xl overflow-hidden relative">
       <div className={cn("absolute top-0 right-0 w-24 h-24 blur-3xl rounded-full -mr-8 -mt-8 opacity-20", colorClass)} />
       <CardContent className="p-6">
@@ -155,701 +186,799 @@ export default function AdminDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC] w-full flex flex-col">
-      {/* Internal Admin Header removed to fix double-heading. Relying on Sidebar/TopNav */}
+    <div className="flex h-screen bg-slate-50">
+      {/* Sidebar - Fixed 280px width */}
+      <div className={cn(
+        "fixed left-0 top-0 h-full bg-white border-r border-slate-200 z-40 transition-all duration-300",
+        sidebarOpen ? "w-72" : "w-0 overflow-hidden"
+      )}>
+        <div className="w-72 h-full flex flex-col">
+          {/* Sidebar Header */}
+          <div className="p-6 border-b border-slate-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#0F3D91] rounded-xl flex items-center justify-center">
+                <Shield className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="font-heading font-bold text-lg text-slate-900">Admin Panel</h2>
+                <p className="text-xs text-slate-500">System Management</p>
+              </div>
+            </div>
+          </div>
 
-      <div className="flex-1 w-full max-w-[1600px] mx-auto p-4 md:p-8">
-        <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="space-y-8">
-          {/* Internal Navigation Hub removed in favor of Sidebar/BottomNav for cleaner UI */}
+          {/* Navigation */}
+          <nav className="flex-1 p-4 space-y-1">
+            {sidebarItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveMainTab(item.id)}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all",
+                    activeMainTab === item.id
+                      ? "bg-[#0F3D91] text-white"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  )}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className="font-medium">{item.label}</span>
+                  {item.id === 'trust-safety' && reports.filter(r => r.status === 'pending').length > 0 && (
+                    <Badge className="ml-auto bg-red-500 text-white">
+                      {reports.filter(r => r.status === 'pending').length}
+                    </Badge>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
 
-          {/* ── HOME: OMNI-SEARCH HUB ───────────────────────────────── */}
-          <TabsContent value="home" className="space-y-8 outline-none">
-            <div className="flex flex-col items-center text-center max-w-2xl mx-auto space-y-2 pt-4">
-              <span className="text-[10px] font-black tracking-wide text-[#FF7A00]">Platform HQ</span>
-              <h2 className="font-heading font-black text-4xl text-[#0F3D91] tracking-tighter italic">Command center</h2>
-              <p className="text-slate-500 text-sm font-medium">Search ecosystem entities or execute administrative functions.</p>
-              <div className="w-full relative">
-                <Search className="absolute left-6 top-1/2 -track-y-1/2 -translate-y-1/2 w-6 h-6 text-[#0F3D91]" />
-                <input
-                  placeholder="Omni-Search Hub | UUID, Name, Entity..."
+          {/* Sidebar Footer */}
+          <div className="p-4 border-t border-slate-200">
+            <div className="flex items-center gap-3 p-3">
+              <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center">
+                <UserPlus className="w-4 h-4 text-slate-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-slate-900 truncate">{user?.name}</p>
+                <p className="text-xs text-slate-500 truncate">Administrator</p>
+              </div>
+            </div>
+            <Button variant="ghost" onClick={handleLogout} className="w-full justify-start mt-2">
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className={cn("flex-1 flex flex-col transition-all duration-300", sidebarOpen ? "ml-72" : "ml-0")}>
+        {/* Top Bar */}
+        <header className="bg-white border-b border-slate-200 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+              >
+                <Menu className="w-4 h-4" />
+              </Button>
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  placeholder="Search users, properties, items..."
                   value={omniSearch}
                   onChange={(e) => setOmniSearch(e.target.value)}
-                  className="w-full h-16 pl-16 pr-8 bg-white border-2 border-[#0F3D91]/10 focus:border-[#0F3D91] rounded-[28px] shadow-2xl shadow-blue-900/5 text-lg font-bold placeholder:text-slate-300 outline-none transition-all"
+                  className="pl-10"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard title="Active Listings" value={housesList.length} icon={Building2} colorClass="bg-[#0F3D91]" desc="Live residential units" />
-              <StatCard title="Platform Members" value={usersList.length} icon={Users} colorClass="bg-[#FF7A00]" desc="Total registered profiles" />
-              <StatCard title="Market items" value={itemsList.length} icon={ShoppingBag} colorClass="bg-indigo-600" desc="Community second-hand items" />
-              <StatCard title="Pending Review" value={housesList.filter(h => h.internalStatus === 'pending').length} icon={Clock} colorClass="bg-amber-500" desc="Awaiting Gatekeeper approval" />
+            <div className="flex items-center gap-3">
+              {/* Notifications */}
+              <Button variant="ghost" size="sm" className="relative">
+                <Bell className="w-4 h-4" />
+                {reports.filter(r => r.status === 'pending').length > 0 && (
+                  <Badge className="absolute -top-1 -right-1 w-5 h-5 p-0 bg-red-500">
+                    {reports.filter(r => r.status === 'pending').length}
+                  </Badge>
+                )}
+              </Button>
+
+              {/* Dark Mode Toggle */}
+              <Button variant="ghost" size="sm" onClick={toggleDarkMode}>
+                {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </Button>
+
+              {/* User Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <div className="w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center">
+                      <UserPlus className="w-3 h-3 text-slate-600" />
+                    </div>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Settings className="w-4 h-4 mr-2" />
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
+          </div>
+        </header>
 
-            {omniSearch && (
-              <Card className="border-none shadow-2xl rounded-3xl overflow-hidden animate-in fade-in zoom-in-95">
-                <CardHeader className="bg-slate-50 border-b border-slate-100 p-6">
-                  <CardTitle className="font-heading font-black text-sm tracking-wide text-[#0F3D91]">Broad search results</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="divide-y divide-slate-100 max-h-[600px] overflow-y-auto">
-                    {/* Search Result Mapping */}
-                    {filteredUsers.map(u => (
-                      <div key={u.id} className="p-4 hover:bg-slate-50 flex items-center justify-between group">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-orange-50 text-[#FF7A00] flex items-center justify-center font-black">u</div>
-                          <div>
-                            <p className="font-bold text-slate-900">{u.name}</p>
-                            <p className="text-[10px] font-mono text-slate-400 capitalize">{u.uuid} • {u.role}</p>
-                          </div>
-                        </div>
-                        <Button variant="ghost" className="rounded-xl text-[#0F3D91]" onClick={() => { setSelectedEntity(u); setEntityType('user'); }}>Manage</Button>
-                      </div>
-                    ))}
-                    {filteredHouses.map(h => (
-                      <div key={h.id} className="p-4 hover:bg-slate-50 flex items-center justify-between group">
-                        <div className="flex items-center gap-4">
-                          <img src={h.images[0]} className="w-10 h-10 rounded-xl object-cover" />
-                          <div>
-                            <p className="font-bold text-slate-900">{h.title}</p>
-                            <p className="text-[10px] font-mono text-slate-400">{h.uuid} • House</p>
-                          </div>
-                        </div>
-                        <Button variant="ghost" className="rounded-xl text-[#0F3D91]" onClick={() => { setSelectedEntity(h); setEntityType('house'); }}>Manage</Button>
-                      </div>
-                    ))}
-                    {filteredUsers.length === 0 && filteredHouses.length === 0 && (
-                      <div className="p-12 text-center text-slate-400 font-bold tracking-wide bg-white">No exact matches found</div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          {/* ── GATEKEEPER: APPROVALS ───────────────────────────────── */}
-          <TabsContent value="gatekeeper" className="space-y-6 outline-none">
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="w-full md:w-64 space-y-2">
-                <Button variant={activeGatekeeperTab === 'landlords' ? 'default' : 'ghost'} onClick={() => setActiveGatekeeperTab('landlords')} className="w-full justify-start h-12 rounded-xl font-bold bg-[#0F3D91]/5 text-[#0F3D91] hover:bg-[#0F3D91]/10 data-[state=active]:bg-[#0F3D91] data-[state=active]:text-white">
-                  <UserPlus className="w-4 h-4 mr-3" /> Landlord Requests
-                </Button>
-                <Button variant={activeGatekeeperTab === 'properties' ? 'default' : 'ghost'} onClick={() => setActiveGatekeeperTab('properties')} className="w-full justify-start h-12 rounded-xl font-bold hover:bg-[#0F3D91]/10" style={{ backgroundColor: activeGatekeeperTab === 'properties' ? '#0F3D91' : '', color: activeGatekeeperTab === 'properties' ? 'white' : '' }}>
-                  <Building2 className="w-4 h-4 mr-3" /> Property Approvals
-                </Button>
-                <Button variant={activeGatekeeperTab === 'marketplace' ? 'default' : 'ghost'} onClick={() => setActiveGatekeeperTab('marketplace')} className="w-full justify-start h-12 rounded-xl font-bold hover:bg-[#0F3D91]/10" style={{ backgroundColor: activeGatekeeperTab === 'marketplace' ? '#0F3D91' : '', color: activeGatekeeperTab === 'marketplace' ? 'white' : '' }}>
-                  <ShoppingBag className="w-4 h-4 mr-3" /> Market Moderation
-                </Button>
+        {/* Page Content */}
+        <main className="flex-1 p-6 overflow-auto">
+          <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="space-y-6">
+            {/* Dashboard Tab */}
+            <TabsContent value="dashboard" className="space-y-6 outline-none">
+              <div>
+                <h1 className="font-heading font-bold text-2xl text-slate-900">Dashboard</h1>
+                <p className="text-slate-600">System overview and quick actions</p>
               </div>
 
-              <div className="flex-1">
-                {activeGatekeeperTab === 'properties' && (
-                  <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
-                    <table className="w-full text-sm">
-                      <thead className="bg-slate-50 text-[10px] font-black tracking-wide text-slate-500 border-b border-slate-100">
-                        <tr>
-                          <th className="px-6 py-4 text-left">Property intel</th>
-                          <th className="px-6 py-4 text-left">Landlord</th>
-                          <th className="px-6 py-4 text-left">Evidence</th>
-                          <th className="px-6 py-4 text-right">Decision</th>
+              {/* Stats Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard title="Active Users" value={usersList.length} icon={Users} colorClass="bg-[#0F3D91]" desc="Total registered" trend={12} />
+                <StatCard title="Properties" value={housesList.length} icon={Building2} colorClass="bg-[#FF7A00]" desc="Live listings" trend={8} />
+                <StatCard title="Marketplace Items" value={itemsList.length} icon={ShoppingBag} colorClass="bg-green-600" desc="Active items" trend={15} />
+                <StatCard title="Pending Reports" value={reports.filter(r => r.status === 'pending').length} icon={Flag} colorClass="bg-red-600" desc="Need attention" trend={-5} />
+              </div>
+
+              {/* Recent Activity */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Recent Activity</CardTitle>
+                    <CardDescription>Latest system actions</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {systemLogs.slice(0, 5).map((log) => (
+                        <div key={log.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className={cn(
+                              "w-2 h-2 rounded-full",
+                              log.type === 'user' ? 'bg-blue-500' : log.type === 'house' ? 'bg-orange-500' : 'bg-slate-500'
+                            )} />
+                            <div>
+                              <p className="text-sm font-medium">{log.action}</p>
+                              <p className="text-xs text-slate-500">{log.target} • {log.admin}</p>
+                            </div>
+                          </div>
+                          <span className="text-xs text-slate-500">
+                            {new Date(log.time).toLocaleTimeString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>System Health</CardTitle>
+                    <CardDescription>Platform performance metrics</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">API Response Time</span>
+                        <Badge className="bg-green-100 text-green-800">Normal</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Database Status</span>
+                        <Badge className="bg-green-100 text-green-800">Healthy</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Storage Usage</span>
+                        <Badge className="bg-yellow-100 text-yellow-800">68%</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Active Sessions</span>
+                        <span className="text-sm text-slate-600">247</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            {/* Users Tab */}
+            <TabsContent value="users" className="space-y-6 outline-none">
+              <div>
+                <h1 className="font-heading font-bold text-2xl text-slate-900">User Management</h1>
+                <p className="text-slate-600">Manage platform users and permissions</p>
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>All Users</CardTitle>
+                      <CardDescription>Manage registered users</CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm">
+                        <Filter className="w-4 h-4 mr-2" />
+                        Filter
+                      </Button>
+                      <Button size="sm">
+                        <UserPlus className="w-4 h-4 mr-2" />
+                        Add User
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left p-2">
+                            <input type="checkbox" className="rounded" />
+                          </th>
+                          <th className="text-left p-2 font-medium">User</th>
+                          <th className="text-left p-2 font-medium">Role</th>
+                          <th className="text-left p-2 font-medium">Status</th>
+                          <th className="text-left p-2 font-medium">Joined</th>
+                          <th className="text-left p-2 font-medium">Last Active</th>
+                          <th className="text-left p-2 font-medium">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 bg-white">
-                        {housesList.filter(h => h.internalStatus === 'pending').map(h => (
-                          <tr key={h.id} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-3">
-                                <img src={h.images[0]} className="w-12 h-12 rounded-xl object-cover shadow-sm" />
+                      <tbody>
+                        {usersList.slice(0, 10).map((user) => (
+                          <tr key={user.uuid} className="border-b hover:bg-slate-50">
+                            <td className="p-2">
+                              <input type="checkbox" className="rounded" />
+                            </td>
+                            <td className="p-2">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center">
+                                  <UserPlus className="w-4 h-4 text-slate-600" />
+                                </div>
                                 <div>
-                                  <p className="font-bold text-slate-900">{h.title}</p>
-                                  <p className="text-[10px] font-bold text-slate-400">{h.uuid} • {h.type}</p>
+                                  <p className="font-medium">{user.name}</p>
+                                  <p className="text-xs text-slate-500">{user.email}</p>
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 py-4 font-semibold text-slate-600">{h.landlordName}</td>
-                            <td className="px-6 py-4">
-                              <div className="flex gap-1">
-                                {h.images.slice(0, 3).map((img: string, idx: number) => (
-                                  <div key={idx} className="w-6 h-6 rounded bg-slate-100 border border-slate-200 overflow-hidden">
-                                    <img src={img} className="w-full h-full object-cover" />
-                                  </div>
-                                ))}
-                              </div>
+                            <td className="p-2">
+                              <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                                {user.role}
+                              </Badge>
                             </td>
-                            <td className="px-6 py-4 text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                <Button size="sm" className="bg-[#0F3D91] hover:bg-blue-800 rounded-lg h-8 px-4 font-bold" onClick={() => {
-                                  setHousesList(prev => prev.map(house => house.id === h.id ? { ...house, internalStatus: 'active' } : house));
-                                  addActionLog('Approved Property', h.uuid, 'house');
-                                  toast({ title: "Approved" });
-                                }}>Approve</Button>
-                                <Button size="sm" variant="outline" className="text-red-600 border-red-100 hover:bg-red-50 rounded-lg h-8 px-4 font-bold">Reject</Button>
-                              </div>
+                            <td className="p-2">
+                              <Badge className={cn(
+                                user.internalStatus === 'approved' ? 'bg-green-100 text-green-800' :
+                                user.internalStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              )}>
+                                {user.internalStatus}
+                              </Badge>
+                            </td>
+                            <td className="p-2 text-sm">{user.joinDate}</td>
+                            <td className="p-2 text-sm">{user.lastActive}</td>
+                            <td className="p-2">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm">
+                                    <MoreVertical className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                  <DropdownMenuItem>
+                                    <Eye className="w-4 h-4 mr-2" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem>
+                                    <Edit3 className="w-4 h-4 mr-2" />
+                                    Edit User
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem>
+                                    <Lock className="w-4 h-4 mr-2" />
+                                    Suspend
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem className="text-red-600">
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
-                  </Card>
-                )}
-                {/* Add other sub-tabs logic here if needed, showing placeholder for now */}
-                {activeGatekeeperTab !== 'properties' && (
-                  <div className="p-20 bg-white rounded-3xl border-2 border-dashed border-slate-200 text-center space-y-3">
-                    <ShieldCheck className="w-12 h-12 text-slate-300 mx-auto" />
-                    <p className="font-bold text-slate-400 tracking-wide text-xs">{activeGatekeeperTab} sub-module under nominal verification</p>
                   </div>
-                )}
-              </div>
-            </div>
-          </TabsContent>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          {/* ── PROPERTY MANAGEMENT: STATUS TOGGLES ───────────────────── */}
-          <TabsContent value="properties" className="space-y-6 outline-none">
-            <div className="flex items-center justify-between">
-              <h3 className="font-heading font-black text-2xl uppercase tracking-tight text-[#0F3D91]">Operational Inventory</h3>
-              <div className="flex gap-2">
-                <Button variant="outline" className="rounded-xl border-slate-200"><Filter className="w-4 h-4 mr-2" /> All Areas</Button>
-                <Button className="rounded-xl bg-[#FF7A00] hover:bg-orange-600 font-bold"><Plus className="w-4 h-4 mr-2" /> NEW ADMIN LISTING</Button>
-              </div>
-            </div>
-
-            <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 divide-x divide-y divide-slate-100 bg-white">
-                {housesList.map(h => (
-                  <div key={h.id} className="p-6 hover:bg-slate-50 transition-all flex flex-col gap-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <img src={h.images[0]} className="w-14 h-14 rounded-2xl object-cover" />
-                        <div>
-                          <p className="font-black text-slate-900 leading-tight">{h.title}</p>
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{h.uuid}</p>
-                        </div>
-                      </div>
-                      <Badge className={cn("rounded-lg h-6 px-3 border-none capitalize", h.internalStatus === 'active' ? 'bg-emerald-500' : 'bg-slate-400')}>
-                        {h.internalStatus}
-                      </Badge>
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs py-3 border-y border-slate-50">
-                      <span className="font-bold text-slate-500">Live Status Toggle</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-black uppercase text-slate-400">Occupied</span>
-                        <Switch
-                          checked={h.internalStatus === 'active'}
-                          onCheckedChange={(c) => {
-                            setHousesList(prev => prev.map(house => house.id === h.id ? { ...house, internalStatus: c ? 'active' : 'archived' } : house));
-                            addActionLog(c ? 'Toggled Visible' : 'Toggled Occupied', h.uuid, 'house');
-                          }}
-                        />
-                        <span className="text-[10px] font-black uppercase text-slate-900">Vacant</span>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2 mt-auto">
-                      <Button size="sm" variant="outline" className="flex-1 rounded-xl h-9 font-bold text-[#0F3D91]" onClick={() => { setSelectedEntity(h); setEntityType('house'); }}>Details</Button>
-                      <Button size="sm" variant="ghost" className="h-9 w-9 p-0 rounded-xl text-red-500 hover:bg-red-50"><Trash2 className="w-4 h-4" /></Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </TabsContent>
-
-          {/* ── LIVE MARKETPLACE: SOLD BUFFER ───────────────────────── */}
-          <TabsContent value="marketplace" className="space-y-6 outline-none">
-            <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center text-white shrink-0">
-                <Clock className="w-6 h-6" />
-              </div>
+            {/* Properties Tab */}
+            <TabsContent value="properties" className="space-y-6 outline-none">
               <div>
-                <h4 className="font-bold text-amber-900 text-sm">7-Day Sold Buffer Active</h4>
-                <p className="text-amber-700 text-[11px] font-medium leading-tight">Items marked as 'Sold' remain visible in this dashboard for 7 days before automated ecosystem purge.</p>
+                <h1 className="font-heading font-bold text-2xl text-slate-900">Property Management</h1>
+                <p className="text-slate-600">Manage property listings and approvals</p>
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {itemsList.map(item => (
-                <Card key={item.id} className={cn("border-none shadow-sm rounded-2xl overflow-hidden group", item.status === 'sold' && 'opacity-60 grayscale-[0.5]')}>
-                  <div className="aspect-square relative">
-                    <img src={item.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                    <div className="absolute top-2 right-2">
-                      {item.status === 'sold' ? (
-                        <Badge className="bg-slate-900 text-white border-none rounded-lg font-black uppercase tracking-widest px-2 py-1 text-[8px]">SOLD: BUFFER</Badge>
-                      ) : (
-                        <Badge className="bg-emerald-500 text-white border-none rounded-lg font-black uppercase tracking-widest px-2 py-1 text-[8px]">ACTIVE</Badge>
-                      )}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>All Properties</CardTitle>
+                      <CardDescription>Manage property listings</CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm">
+                        <Filter className="w-4 h-4 mr-2" />
+                        Filter
+                      </Button>
+                      <Button size="sm">
+                        <Building2 className="w-4 h-4 mr-2" />
+                        Add Property
+                      </Button>
                     </div>
                   </div>
-                  <CardContent className="p-4 space-y-2">
-                    <p className="font-bold text-slate-900 line-clamp-1">{item.title}</p>
-                    <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-400">
-                      <span>{item.category}</span>
-                      <span className="text-[#FF7A00]">KSh {item.price.toLocaleString()}</span>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left p-2">
+                            <input type="checkbox" className="rounded" />
+                          </th>
+                          <th className="text-left p-2 font-medium">Property</th>
+                          <th className="text-left p-2 font-medium">Owner</th>
+                          <th className="text-left p-2 font-medium">Price</th>
+                          <th className="text-left p-2 font-medium">Status</th>
+                          <th className="text-left p-2 font-medium">Views</th>
+                          <th className="text-left p-2 font-medium">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {housesList.slice(0, 10).map((house) => (
+                          <tr key={house.uuid} className="border-b hover:bg-slate-50">
+                            <td className="p-2">
+                              <input type="checkbox" className="rounded" />
+                            </td>
+                            <td className="p-2">
+                              <div>
+                                <p className="font-medium">{house.title}</p>
+                                <p className="text-xs text-slate-500">{house.location}</p>
+                              </div>
+                            </td>
+                            <td className="p-2">
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center">
+                                  <UserPlus className="w-3 h-3 text-slate-600" />
+                                </div>
+                                <span className="text-sm">{house.landlordName}</span>
+                              </div>
+                            </td>
+                            <td className="p-2 font-medium">KSh {house.price.toLocaleString()}</td>
+                            <td className="p-2">
+                              <Badge className={cn(
+                                house.internalStatus === 'approved' ? 'bg-green-100 text-green-800' :
+                                house.internalStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              )}>
+                                {house.internalStatus}
+                              </Badge>
+                            </td>
+                            <td className="p-2 text-sm">{house.views}</td>
+                            <td className="p-2">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm">
+                                    <MoreVertical className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                  <DropdownMenuItem>
+                                    <Eye className="w-4 h-4 mr-2" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem>
+                                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                                    Approve
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem>
+                                    <XCircle className="w-4 h-4 mr-2" />
+                                    Reject
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem className="text-red-600">
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Marketplace Tab */}
+            <TabsContent value="marketplace" className="space-y-6 outline-none">
+              <div>
+                <h1 className="font-heading font-bold text-2xl text-slate-900">Marketplace Management</h1>
+                <p className="text-slate-600">Manage marketplace items and categories</p>
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>All Items</CardTitle>
+                      <CardDescription>Manage marketplace listings</CardDescription>
                     </div>
-                    {item.status === 'sold' && (
-                      <div className="pt-2 mt-2 border-t border-slate-100 flex items-center gap-2 text-red-400">
-                        <Trash2 className="w-3 h-3" />
-                        <span className="text-[9px] font-black">Purge in 3 Days</span>
-                      </div>
-                    )}
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm">
+                        <Filter className="w-4 h-4 mr-2" />
+                        Filter
+                      </Button>
+                      <Button size="sm">
+                        <ShoppingBag className="w-4 h-4 mr-2" />
+                        Add Item
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left p-2">
+                            <input type="checkbox" className="rounded" />
+                          </th>
+                          <th className="text-left p-2 font-medium">Item</th>
+                          <th className="text-left p-2 font-medium">Seller</th>
+                          <th className="text-left p-2 font-medium">Price</th>
+                          <th className="text-left p-2 font-medium">Category</th>
+                          <th className="text-left p-2 font-medium">Status</th>
+                          <th className="text-left p-2 font-medium">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {itemsList.slice(0, 10).map((item) => (
+                          <tr key={item.uuid} className="border-b hover:bg-slate-50">
+                            <td className="p-2">
+                              <input type="checkbox" className="rounded" />
+                            </td>
+                            <td className="p-2">
+                              <div>
+                                <p className="font-medium">{item.title}</p>
+                                <p className="text-xs text-slate-500">{item.condition}</p>
+                              </div>
+                            </td>
+                            <td className="p-2">
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center">
+                                  <UserPlus className="w-3 h-3 text-slate-600" />
+                                </div>
+                                <span className="text-sm">{item.sellerName}</span>
+                              </div>
+                            </td>
+                            <td className="p-2 font-medium">KSh {item.price.toLocaleString()}</td>
+                            <td className="p-2">
+                              <Badge variant="outline">{item.category}</Badge>
+                            </td>
+                            <td className="p-2">
+                              <Badge className={cn(
+                                item.internalStatus === 'approved' ? 'bg-green-100 text-green-800' :
+                                item.internalStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              )}>
+                                {item.internalStatus}
+                              </Badge>
+                            </td>
+                            <td className="p-2">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm">
+                                    <MoreVertical className="w-4 h-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                  <DropdownMenuItem>
+                                    <Eye className="w-4 h-4 mr-2" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem>
+                                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                                    Approve
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem>
+                                    <XCircle className="w-4 h-4 mr-2" />
+                                    Reject
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem className="text-red-600">
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Trust & Safety Tab */}
+            <TabsContent value="trust-safety" className="space-y-6 outline-none">
+              <div>
+                <h1 className="font-heading font-bold text-2xl text-slate-900">Trust & Safety</h1>
+                <p className="text-slate-600">Manage reports, moderation, and safety policies</p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>User Reports</CardTitle>
+                    <CardDescription>Reports submitted by users</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {reports.map((report) => (
+                        <div key={report.id} className="p-4 border rounded-lg">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <p className="font-medium">{report.reason}</p>
+                              <p className="text-sm text-slate-600">{report.target} • {report.user}</p>
+                              <p className="text-xs text-slate-500">{report.date}</p>
+                            </div>
+                            <Badge className={cn(
+                              report.status === 'resolved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                            )}>
+                              {report.status}
+                            </Badge>
+                          </div>
+                          <div className="flex gap-2 mt-3">
+                            <Button size="sm" variant="outline">Review</Button>
+                            <Button size="sm" variant="outline">Resolve</Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          </TabsContent>
 
-          {/* ── REQUESTS & LEADS: MATCHING ENGINE ───────────────────── */}
-          <TabsContent value="requests" className="space-y-6 outline-none">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-4">
-                <h3 className="font-heading font-black text-xl uppercase tracking-tight text-[#0F3D91]">Member Requirements</h3>
-                <div className="space-y-3">
-                  {requests.map(req => (
-                    <Card key={req.id} className="border-none shadow-sm rounded-2xl p-6 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="flex gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black">R</div>
-                        <div>
-                          <p className="font-black text-slate-900">{req.user}</p>
-                          <div className="flex gap-2 text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">
-                            <span>{req.type}</span>
-                            <span>•</span>
-                            <span>{req.location}</span>
-                            <span>•</span>
-                            <span className="text-emerald-500">{req.budget}</span>
-                          </div>
-                        </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Safety Metrics</CardTitle>
+                    <CardDescription>Platform safety statistics</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Total Reports</span>
+                        <span className="text-sm font-bold">{reports.length}</span>
                       </div>
-                      <div className="flex gap-2">
-                        {req.matchedId ? (
-                          <Button variant="outline" className="rounded-xl h-10 border-emerald-100 text-emerald-600 font-bold px-6">
-                            <Check className="w-4 h-4 mr-2" /> CONNECTED
-                          </Button>
-                        ) : (
-                          <Button className="rounded-xl h-10 bg-[#0F3D91] hover:bg-blue-800 font-bold px-6 shadow-md shadow-blue-500/20">
-                            <Zap className="w-4 h-4 mr-2" /> AUTO-MATCH
-                          </Button>
-                        )}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Pending Review</span>
+                        <span className="text-sm font-bold text-yellow-600">
+                          {reports.filter(r => r.status === 'pending').length}
+                        </span>
                       </div>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-
-              <Card className="border-none shadow-sm rounded-3xl bg-slate-900 text-white p-6 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF7A00]/20 rounded-full -mr-8 -mt-8 blur-3xl" />
-                <h4 className="font-heading font-black text-lg uppercase mb-4">Inventory Suggestion</h4>
-                <div className="space-y-4 relative z-10">
-                  <p className="text-slate-400 text-sm font-medium">Matching 4 new requests for "Bedsitter" with current vacant units in Town Center.</p>
-                  <div className="space-y-2">
-                    <div className="p-3 bg-white/5 rounded-xl border border-white/10 text-xs flex justify-between items-center">
-                      <span className="font-bold opacity-80">Elite Plaza #02</span>
-                      <span className="text-emerald-400 font-black">98% Match</span>
-                    </div>
-                    <div className="p-3 bg-white/5 rounded-xl border border-white/10 text-xs flex justify-between items-center">
-                      <span className="font-bold opacity-80">Sunrise Hse #10</span>
-                      <span className="text-amber-400 font-black">7 external leads</span>
-                    </div>
-                  </div>
-                  <Button className="w-full h-11 bg-white text-slate-900 hover:bg-slate-100 rounded-xl font-black text-[10px] tracking-widest uppercase">DISPATCH LEADS</Button>
-                </div>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* ── MEMBERSHIP: ROLES & SUSPENSION ──────────────────────── */}
-          <TabsContent value="membership" className="space-y-6 outline-none">
-            <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-[#0F3D91] text-white text-[10px] font-black uppercase tracking-widest">
-                  <tr>
-                    <th className="px-6 py-4 text-left">Identity</th>
-                    <th className="px-6 py-4 text-left">Role Hierarchy</th>
-                    <th className="px-6 py-4 text-left">Reputation Score</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
-                  {usersList.map(u => (
-                    <tr key={u.id}>
-                      <td className="px-6 py-4">
-                        <div>
-                          <p className="font-black text-slate-900">{u.name}</p>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{u.uuid} • {u.email}</p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 uppercase font-black text-[10px]">
-                        <Badge variant="outline" className={cn("rounded-lg px-2 border-slate-200", u.role === 'admin' ? 'text-red-600 bg-red-50' : 'text-[#0F3D91] bg-slate-50')}>
-                          {u.role}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-[#FF7A00]" style={{ width: `${u.reputationScore}%` }} />
-                          </div>
-                          <span className="text-[10px] font-black text-[#FF7A00]">{u.reputationScore}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-10 px-4 rounded-xl font-black text-[10px] uppercase tracking-widest text-[#0F3D91]">
-                              Manage Member <MoreVertical className="w-4 h-4 ml-2" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="rounded-2xl w-56 p-2">
-                            <DropdownMenuItem className="rounded-xl font-bold h-10 px-4" onClick={() => {
-                              setUsersList(prev => prev.map(usr => usr.id === u.id ? { ...usr, role: 'landlord' } : usr));
-                              addActionLog('Promoted to Landlord', u.uuid, 'user');
-                            }}>
-                              <ShieldCheck className="w-4 h-4 mr-3 text-emerald-500" /> Promote to Landlord
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="rounded-xl font-bold h-10 px-4" onClick={() => {
-                              setUsersList(prev => prev.map(usr => usr.id === u.id ? { ...usr, role: 'tenant' } : usr));
-                              addActionLog('Demoted to Tenant', u.uuid, 'user');
-                            }}>
-                              <ArrowLeft className="w-4 h-4 mr-3 text-slate-400" /> Demote to Tenant
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator className="my-1" />
-                            <DropdownMenuItem className="rounded-xl font-bold h-10 px-4 text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => {
-                              setUsersList(prev => prev.filter(usr => usr.id !== u.id));
-                              addActionLog('Hard Suspended User', u.uuid, 'user');
-                            }}>
-                              <XCircle className="w-4 h-4 mr-3" /> Suspend Account
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Card>
-          </TabsContent>
-
-          {/* ── TRUST & SAFETY: REPORTS & BADGES ────────────────────── */}
-          <TabsContent value="safety" className="space-y-6 outline-none">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-              <Card className="border-none shadow-sm rounded-3xl overflow-hidden flex flex-col">
-                <CardHeader className="bg-[#0F3D91] text-white">
-                  <CardTitle className="font-heading font-black text-lg uppercase tracking-tighter">Active System Reports</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0 flex-1 bg-white">
-                  <div className="divide-y divide-slate-100">
-                    {reports.map((r, idx) => (
-                      <div key={idx} className="p-5 flex items-start justify-between gap-4">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <Badge className={cn("rounded px-1.5 text-[8px] font-black uppercase", r.status === 'pending' ? 'bg-amber-500' : 'bg-emerald-500')}>{r.status}</Badge>
-                            <span className="text-[10px] font-black text-slate-400">{r.date}</span>
-                          </div>
-                          <p className="font-bold text-slate-900 leading-tight">{r.reason}</p>
-                          <p className="text-[10px] font-black text-[#0F3D91] uppercase tracking-widest">Target: {r.target} • Filed by {r.user}</p>
-                        </div>
-                        <Button size="sm" variant="outline" className="rounded-xl font-bold text-[10px] uppercase border-slate-200">Review</Button>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Resolved</span>
+                        <span className="text-sm font-bold text-green-600">
+                          {reports.filter(r => r.status === 'resolved').length}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
-                <CardHeader className="bg-[#FF7A00] text-white">
-                  <CardTitle className="font-heading font-black text-lg uppercase tracking-widest">High-Trust Allocations</CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-4 bg-white">
-                  <div className="space-y-4">
-                    <p className="text-xs font-medium text-slate-500">Auto-allocated badges based on platform behavior. Manual override available.</p>
-
-                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-[#0F3D91]/10 flex items-center justify-center text-[#0F3D91]">
-                          <ShieldCheck className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-slate-900">Verified Listing</p>
-                          <p className="text-[10px] font-medium text-slate-500">Passed structural audit</p>
-                        </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Response Time</span>
+                        <span className="text-sm font-bold">2.4 hours</span>
                       </div>
-                      <Badge className="bg-slate-200 text-slate-700 font-black">214 Live</Badge>
                     </div>
-
-                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600">
-                          <Star className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-slate-900">Superhost Status</p>
-                          <p className="text-[10px] font-medium text-slate-500">Avg Rating {'>'} 4.8 & 20+ inquiries</p>
-                        </div>
-                      </div>
-                      <Badge className="bg-amber-100 text-amber-700 font-black">42 Global</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* ── MEDIA VAULT: ASSET MANAGEMENT ───────────────────────── */}
-          <TabsContent value="vault" className="space-y-6 outline-none">
-            <div className="flex items-center justify-between">
-              <h2 className="font-heading font-black text-2xl uppercase tracking-tight text-[#0F3D91]">Digital Assets Hub</h2>
-              <div className="flex gap-2">
-                <Button variant="outline" className="rounded-xl border-slate-200 h-10"><RefreshCcw className="w-4 h-4 mr-2" /> REFRESH MAPPING</Button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
-              {housesList.slice(0, 12).map((h, i) => (
-                <div key={i} className="aspect-square rounded-2xl overflow-hidden relative group cursor-pointer border border-slate-100 shadow-sm">
-                  <img src={h.images[0]} className="w-full h-full object-cover group-hover:scale-125 transition-all duration-700" title={h.title} />
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2">
-                    <p className="text-[8px] font-black text-white uppercase text-center line-clamp-1">{h.title}</p>
-                    <div className="flex gap-1">
-                      <button className="w-7 h-7 bg-white text-slate-900 rounded-lg flex items-center justify-center hover:bg-[#FF7A00] hover:text-white transition-colors"><Eye className="w-3.5 h-3.5" /></button>
-                      <button className="w-7 h-7 bg-white text-slate-900 rounded-lg flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-colors"><ArrowLeft className="w-3.5 h-3.5 rotate-90" /></button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              <div className="aspect-square rounded-2xl border-4 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-300 gap-2 hover:border-[#0F3D91] hover:text-[#0F3D91] transition-all cursor-pointer">
-                <ImageIcon className="w-8 h-8" />
-                <span className="text-[10px] font-black uppercase">Browse Storage</span>
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* ── SYSTEM LOGS: ACTIVITY & UNDO ────────────────────────── */}
-          <TabsContent value="logs" className="space-y-6 outline-none">
-            <Card className="border-none shadow-sm rounded-3xl overflow-hidden">
-              <CardHeader className="bg-white border-b border-slate-100 p-6 flex flex-row items-center justify-between space-y-0">
-                <div>
-                  <CardTitle className="font-heading font-black text-xl uppercase tracking-tighter text-[#0F3D91]">Security Ledger</CardTitle>
-                  <CardDescription>Final trace for all administrative interactions.</CardDescription>
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={exportLogsAsPDF} className="rounded-xl h-10 bg-[#FF7A00] hover:bg-orange-600 font-bold px-6 shadow-lg shadow-orange-500/20">
-                    <Download className="w-4 h-4 mr-2" /> EXPORT PDF
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0 bg-white">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-100">
-                      <tr>
-                        <th className="px-6 py-4 text-left">Timestamp</th>
-                        <th className="px-6 py-4 text-left">Operator</th>
-                        <th className="px-6 py-4 text-left">Logical Action</th>
-                        <th className="px-6 py-4 text-left">Target Object</th>
-                        <th className="px-6 py-4 text-right">Integrity</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {logs.map(log => (
-                        <tr key={log.id} className="hover:bg-slate-50/50">
-                          <td className="px-6 py-4 font-mono text-[10px] text-slate-400">{new Date(log.time).toLocaleString()}</td>
-                          <td className="px-6 py-4">
-                            <Badge variant="outline" className="rounded h-5 border-slate-200 text-[#0F3D91] font-bold text-[9px] uppercase tracking-wider">{log.admin}</Badge>
-                          </td>
-                          <td className="px-6 py-4 font-bold text-slate-800">{log.action}</td>
-                          <td className="px-6 py-4 font-mono text-[10px] text-slate-500">{log.target}</td>
-                          <td className="px-6 py-4 text-right">
-                            {log.canUndo ? (
-                              <Button size="sm" variant="ghost" onClick={() => handleUndo(log.id)} className="text-red-600 font-black text-[10px] uppercase hover:bg-red-50 px-3 rounded-lg flex items-center gap-1.5 ml-auto">
-                                <Undo2 className="w-3 h-3" /> Revert State
-                              </Button>
-                            ) : (
-                              <div className="flex items-center gap-2 justify-end text-emerald-500 font-black text-[9px] uppercase tracking-widest">
-                                <Shield className="w-3 h-3" /> Immutable
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* ── SYSTEM SETTINGS: UI STUDIO ──────────────────────────── */}
-          <TabsContent value="settings" className="space-y-6 outline-none">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-              {/* Marketing Slider Control */}
-              <Card className="lg:col-span-2 border-none shadow-sm rounded-3xl overflow-hidden">
-                <CardHeader className="bg-[#0F3D91] text-white">
-                  <CardTitle className="font-heading font-black text-lg uppercase tracking-widest">Marketing Slider Configuration</CardTitle>
-                  <CardDescription className="text-white/60">Update home page visuals and core messages.</CardDescription>
-                </CardHeader>
-                <CardContent className="p-6 space-y-6 bg-white">
-                  <div className="space-y-4">
-                    {sliderConfig.map((slide, idx) => (
-                      <div key={slide.id} className="p-4 border border-slate-100 rounded-2xl flex flex-col sm:flex-row gap-4 group">
-                        <div className="w-full sm:w-40 h-24 rounded-xl overflow-hidden relative">
-                          <img src={slide.image} className="w-full h-full object-cover" />
-                          <button className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity font-bold text-[10px] uppercase tracking-widest">Update Image</button>
-                        </div>
-                        <div className="flex-1 space-y-3">
-                          <div className="space-y-1">
-                            <Label className="text-[9px] font-black uppercase tracking-widest text-[#0F3D91]">Slide {idx + 1} Headline</Label>
-                            <Input value={slide.message} onChange={(e) => {
-                              const newConfig = [...sliderConfig];
-                              newConfig[idx].message = e.target.value;
-                              setSliderConfig(newConfig);
-                            }} className="h-10 rounded-xl" />
-                          </div>
-                        </div>
-                        <Button variant="ghost" className="self-center h-10 w-10 p-0 text-red-500 hover:bg-red-50"><Trash2 className="w-4 h-4" /></Button>
-                      </div>
-                    ))}
-                    <Button variant="outline" className="w-full h-12 rounded-2xl border-dashed border-2 border-slate-200 text-slate-400 font-bold uppercase tracking-widest hover:border-[#0F3D91] hover:text-[#0F3D91]">
-                      <Plus className="w-4 h-4 mr-2" /> ADD NEW MARKETING SLIDE
-                    </Button>
-                  </div>
-                  <div className="pt-4 border-t border-slate-50 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Label className="text-[10px] font-black uppercase text-slate-400">Gradient Overlay Opacity</Label>
-                      <input type="range" className="w-32 accent-[#00B4D8]" min="10" max="90" defaultValue="40" />
-                    </div>
-                    <Button className="bg-[#0F3D91] rounded-xl font-bold px-8 h-10">SAVE UI CHANGES</Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* System Toggles */}
-              <div className="space-y-6">
-                <Card className="border-none shadow-sm rounded-3xl bg-slate-900 text-white p-6">
-                  <h4 className="font-heading font-black text-sm uppercase tracking-widest mb-6 text-slate-400">Environment Controls</h4>
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <p className="font-bold text-sm">Maintenance Mode</p>
-                        <p className="text-[10px] text-slate-500 font-medium">Redirect all guests to holding page</p>
-                      </div>
-                      <Switch checked={isMaintenanceMode} onCheckedChange={setIsMaintenanceMode} className="data-[state=checked]:bg-amber-500" />
-                    </div>
-                    <div className="flex items-center justify-between px-3 py-3 bg-white/5 rounded-2xl border border-white/10">
-                      <div className="space-y-0.5">
-                        <p className="font-bold text-sm">Pause All Uploads</p>
-                        <p className="text-[10px] text-slate-500 font-medium">Restrict new listing creation</p>
-                      </div>
-                      <Switch checked={pauseUploads} onCheckedChange={(c) => { setPauseUploads(c); addActionLog(c ? 'Paused Uploads' : 'Resumed Uploads', 'System', 'system'); }} />
-                    </div>
-                    <Button variant="outline" className="w-full h-11 border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white rounded-xl font-bold tracking-widest uppercase text-[10px]" onClick={() => {
-                      if (confirm("DANGER: This will permanently wipe all system logs. Proceed?")) {
-                        setLogs([]);
-                        toast({ title: "Ledger Wiped" });
-                      }
-                    }}>
-                      <Trash2 className="w-4 h-4 mr-2" /> Clear Platform Logs
-                    </Button>
-                  </div>
+                  </CardContent>
                 </Card>
               </div>
-            </div>
-          </TabsContent>
+            </TabsContent>
 
-        </Tabs>
-      </div>
+            {/* Media Vault Tab */}
+            <TabsContent value="media-vault" className="space-y-6 outline-none">
+              <div>
+                <h1 className="font-heading font-bold text-2xl text-slate-900">Media Vault</h1>
+                <p className="text-slate-600">Manage images, files, and media storage</p>
+              </div>
 
-      <Sheet open={!!selectedEntity} onOpenChange={(open) => !open && setSelectedEntity(null)}>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader className="pb-6 border-b border-slate-100">
-            <SheetTitle className="font-heading font-black text-2xl tracking-tighter text-[#0F3D91]">Entity dossier</SheetTitle>
-            <SheetDescription className="font-mono text-xs font-bold text-[#FF7A00]">{selectedEntity?.uuid}</SheetDescription>
-          </SheetHeader>
-          {selectedEntity && (
-            <div className="py-6 space-y-8 animate-in fade-in slide-in-from-right-4">
-              {entityType === 'house' && (
-                <>
-                  <div className="rounded-3xl overflow-hidden aspect-video shadow-xl">
-                    <img src={selectedEntity.images[0]} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-black text-xl text-slate-900 leading-tight">{selectedEntity.title}</h3>
-                        <p className="text-emerald-600 font-black text-lg mt-1">KSh {selectedEntity.price.toLocaleString()}</p>
-                      </div>
-                      <Badge className="bg-[#0F3D91] rounded-lg px-2 text-[10px]">{selectedEntity.internalStatus}</Badge>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="p-4 bg-slate-50 rounded-2xl">
-                        <p className="text-[9px] font-black uppercase text-slate-400">Type</p>
-                        <p className="font-black text-[#0F3D91]">{selectedEntity.type}</p>
-                      </div>
-                      <div className="p-4 bg-slate-50 rounded-2xl">
-                        <p className="text-[9px] font-black uppercase text-slate-400">Manager</p>
-                        <p className="font-black text-[#0F3D91] truncate">{selectedEntity.landlordName}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <Button className="h-12 bg-[#0F3D91] hover:bg-black rounded-xl font-bold">CONTACT OWNER</Button>
-                    <Button variant="outline" className="h-12 border-red-100 text-red-600 hover:bg-red-50 rounded-xl font-bold">REVOKE STATUS</Button>
-                  </div>
-                </>
-              )}
-              {entityType === 'user' && (
-                <>
-                  <div className="flex items-center gap-6">
-                    <div className="w-20 h-20 rounded-3xl bg-[#0F3D91] text-white flex items-center justify-center font-black text-3xl shadow-xl shadow-blue-500/20">
-                      {selectedEntity.name.substring(0, 2).toUpperCase()}
-                    </div>
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-black text-2xl text-slate-900">{selectedEntity.name}</h3>
-                      <p className="text-slate-500 font-medium">{selectedEntity.email}</p>
+                      <CardTitle>Media Library</CardTitle>
+                      <CardDescription>Manage uploaded images and files</CardDescription>
                     </div>
+                    <Button size="sm">
+                      <ImageIcon className="w-4 h-4 mr-2" />
+                      Upload Media
+                    </Button>
                   </div>
-                  <div className="space-y-1 p-2 bg-slate-50 rounded-3xl border border-slate-100">
-                    {[
-                      { label: 'Registered On', value: '2026-03-01', icon: Clock },
-                      { label: 'Platform Role', value: selectedEntity.role, icon: Shield, highlight: true },
-                      { label: 'Security Status', value: selectedEntity.verified ? 'Verified' : 'Unverified', icon: Lock },
-                      { label: 'Trust Rating', value: `${selectedEntity.reputationScore}%`, icon: Star }
-                    ].map((item, i) => (
-                      <div key={i} className="flex items-center justify-between p-4 bg-white rounded-2xl mb-1 last:mb-0">
-                        <div className="flex items-center gap-3">
-                          <item.icon className="w-4 h-4 text-slate-400" />
-                          <span className="text-xs font-bold text-slate-500">{item.label}</span>
-                        </div>
-                        <span className={cn("text-xs font-black", item.highlight ? 'text-[#0F3D91]' : 'text-slate-900')}>{item.value}</span>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                      <div key={i} className="aspect-square bg-slate-100 rounded-lg border-2 border-dashed border-slate-300 flex items-center justify-center">
+                        <ImageIcon className="w-8 h-8 text-slate-400" />
                       </div>
                     ))}
                   </div>
-                </>
-              )}
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Reports Tab */}
+            <TabsContent value="reports" className="space-y-6 outline-none">
+              <div>
+                <h1 className="font-heading font-bold text-2xl text-slate-900">Reports</h1>
+                <p className="text-slate-600">Generate and view system reports</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>User Activity Report</CardTitle>
+                    <CardDescription>Monthly user engagement</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button className="w-full">Generate Report</Button>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Financial Report</CardTitle>
+                    <CardDescription>Revenue and transactions</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button className="w-full">Generate Report</Button>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Content Report</CardTitle>
+                    <CardDescription>Listings and marketplace data</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button className="w-full">Generate Report</Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            {/* System Logs Tab */}
+            <TabsContent value="system-logs" className="space-y-6 outline-none">
+              <div>
+                <h1 className="font-heading font-bold text-2xl text-slate-900">System Logs</h1>
+                <p className="text-slate-600">View system activity and audit logs</p>
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Audit Logs</CardTitle>
+                      <CardDescription>System administrator actions</CardDescription>
+                    </div>
+                    <Button variant="outline" size="sm">
+                      <Download className="w-4 h-4 mr-2" />
+                      Export
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {systemLogs.map((log) => (
+                      <div key={log.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "w-2 h-2 rounded-full",
+                            log.type === 'user' ? 'bg-blue-500' : log.type === 'house' ? 'bg-orange-500' : 'bg-slate-500'
+                          )} />
+                          <div>
+                            <p className="font-medium">{log.action}</p>
+                            <p className="text-sm text-slate-600">{log.target} • {log.admin}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-slate-500">
+                            {new Date(log.time).toLocaleDateString()}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {new Date(log.time).toLocaleTimeString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Settings Tab */}
+            <TabsContent value="settings" className="space-y-6 outline-none">
+              <div>
+                <h1 className="font-heading font-bold text-2xl text-slate-900">Settings</h1>
+                <p className="text-slate-600">Configure system settings and preferences</p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>General Settings</CardTitle>
+                    <CardDescription>Basic system configuration</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label>Maintenance Mode</Label>
+                      <Switch />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label>User Registration</Label>
+                      <Switch defaultChecked />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label>Email Notifications</Label>
+                      <Switch defaultChecked />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Security Settings</CardTitle>
+                    <CardDescription>Security and privacy options</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label>Two-Factor Auth</Label>
+                      <Switch />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label>Session Timeout</Label>
+                      <Input type="number" defaultValue="30" className="w-20" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <Label>Max Login Attempts</Label>
+                      <Input type="number" defaultValue="5" className="w-20" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </main>
+      </div>
     </div>
   );
-}
-
-// Extra icons for the dashboard
-function Plus(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M5 12h14" />
-      <path d="M12 5v14" />
-    </svg>
-  )
 }

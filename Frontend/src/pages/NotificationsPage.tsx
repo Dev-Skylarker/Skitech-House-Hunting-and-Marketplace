@@ -24,7 +24,7 @@ type FilterType = 'all' | 'unread' | 'archived' | 'muted';
 type SortType = 'newest' | 'oldest';
 
 export default function NotificationsPage() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { notifications, markAsRead, markAsUnread, deleteNotification, muteNotification } = useNotifications();
   const [filter, setFilter] = useState<FilterType>('all');
@@ -33,21 +33,33 @@ export default function NotificationsPage() {
   const [requestedPushPerms, setRequestedPushPerms] = useState(false);
   const [viewingNotif, setViewingNotif] = useState<Notification | null>(null);
 
+  // Default notification for non-authenticated users
+  const defaultNotification: Notification = {
+    id: 'default-welcome',
+    userId: 'guest',
+    title: 'Welcome to Skitech Notifications',
+    description: 'Sign in to access personalized notifications, account updates, and real-time alerts for your saved properties and marketplace items.',
+    type: 'system',
+    read: false,
+    muted: false,
+    createdAt: new Date().toISOString()
+  };
+
   useEffect(() => {
-    // Request push notification permission on mount (once per session)
-    if (!requestedPushPerms && 'Notification' in window && Notification.permission === 'default') {
+    // Request push notification permission on mount (once per session) - only for authenticated users
+    if (!requestedPushPerms && isAuthenticated && 'Notification' in window && Notification.permission === 'default') {
       setRequestedPushPerms(true);
     }
-  }, [requestedPushPerms]);
+  }, [requestedPushPerms, isAuthenticated]);
 
   // Filter notifications
-  let filtered = notifications;
+  let filtered = isAuthenticated ? notifications : [defaultNotification];
   if (filter === 'unread') {
-    filtered = notifications.filter(n => !n.read && !n.muted);
+    filtered = filtered.filter(n => !n.read && !n.muted);
   } else if (filter === 'archived') {
-    filtered = notifications.filter(n => n.read);
+    filtered = filtered.filter(n => n.read);
   } else if (filter === 'muted') {
-    filtered = notifications.filter(n => n.muted);
+    filtered = filtered.filter(n => n.muted);
   }
 
   // Sort notifications
@@ -151,19 +163,21 @@ export default function NotificationsPage() {
             <h1 className="font-heading font-bold text-2xl">Notifications</h1>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleSelectAll}
-              className="text-xs font-bold text-[#0F3D91] gap-2 h-9 px-3 rounded-lg hover:bg-blue-50"
-            >
-              {selectedIds.size === sorted.length && sorted.length > 0 ? (
-                <CheckSquare className="w-4 h-4 text-[#FF7A00]" />
-              ) : (
-                <Square className="w-4 h-4" />
-              )}
-              {selectedIds.size === sorted.length && sorted.length > 0 ? 'Deselect All' : 'Select All'}
-            </Button>
+            {isAuthenticated && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleSelectAll}
+                className="text-xs font-bold text-[#0F3D91] gap-2 h-9 px-3 rounded-lg hover:bg-blue-50"
+              >
+                {selectedIds.size === sorted.length && sorted.length > 0 ? (
+                  <CheckSquare className="w-4 h-4 text-[#FF7A00]" />
+                ) : (
+                  <Square className="w-4 h-4" />
+                )}
+                {selectedIds.size === sorted.length && sorted.length > 0 ? 'Deselect All' : 'Select All'}
+              </Button>
+            )}
             <button
               onClick={() => setSort(sort === 'newest' ? 'oldest' : 'newest')}
               className="p-2 rounded-lg hover:bg-muted transition-colors"
@@ -234,7 +248,7 @@ export default function NotificationsPage() {
         </Tabs>
 
         {/* Bulk Actions */}
-        {selectedIds.size > 0 && (
+        {selectedIds.size > 0 && isAuthenticated && (
           <Card className="border-none shadow-sm rounded-lg mb-6 bg-[#0F3D91]/5 border border-[#0F3D91]/20">
             <CardContent className="p-4 flex items-center justify-between">
               <p className="text-sm font-medium">{selectedIds.size} selected</p>
@@ -316,14 +330,16 @@ export default function NotificationsPage() {
                     }}
                   >
                     <CardContent className="p-3 flex items-start gap-3">
-                      {/* Checkbox */}
-                      <div onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          checked={selectedIds.has(notif.id)}
-                          onCheckedChange={() => toggleSelect(notif.id)}
-                          className="mt-1 rounded"
-                        />
-                      </div>
+                      {/* Checkbox - Only for authenticated users */}
+                      {isAuthenticated && (
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={selectedIds.has(notif.id)}
+                            onCheckedChange={() => toggleSelect(notif.id)}
+                            className="mt-1 rounded"
+                          />
+                        </div>
+                      )}
 
                       {/* Icon */}
                       <div className="flex-shrink-0 mt-1">
@@ -338,16 +354,16 @@ export default function NotificationsPage() {
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {notif.description}
                         </p>
-                        {notif.id === 'guest-hook' && (
+                        {notif.id === 'default-welcome' && !isAuthenticated && (
                           <Button
                             onClick={(e) => {
                               e.stopPropagation();
-                              navigate('/guide');
+                              navigate('/account');
                             }}
                             className="mt-3 bg-[#0F3D91] hover:bg-[#FF7A00] text-white rounded-xl h-9 px-4 font-bold text-xs gap-2 shadow-lg hover:shadow-[#FF7A00]/20 transition-all duration-300"
                           >
                             <PlayCircle className="w-4 h-4" />
-                            View System Guide
+                            Sign In to Access More Features
                           </Button>
                         )}
                         {notif.muted && (
@@ -362,45 +378,47 @@ export default function NotificationsPage() {
                         <div className="w-2 h-2 rounded-full bg-[#0F3D91] flex-shrink-0 mt-2" />
                       )}
 
-                      {/* Actions */}
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        {notif.read && (
+                      {/* Actions - Only for authenticated users */}
+                      {isAuthenticated && (
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          {notif.read && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markAsUnread(notif.id);
+                              }}
+                              className="p-1.5 rounded-lg hover:bg-muted transition-colors"
+                              title="Mark as unread"
+                            >
+                              <Clock className="w-4 h-4 text-muted-foreground" />
+                            </button>
+                          )}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              markAsUnread(notif.id);
+                              muteNotification(notif.id);
                             }}
                             className="p-1.5 rounded-lg hover:bg-muted transition-colors"
-                            title="Mark as unread"
+                            title={notif.muted ? 'Unmute' : 'Mute'}
                           >
-                            <Clock className="w-4 h-4 text-muted-foreground" />
+                            {notif.muted ? (
+                              <Volume2 className="w-4 h-4 text-[#0F3D91]" />
+                            ) : (
+                              <VolumeX className="w-4 h-4 text-muted-foreground" />
+                            )}
                           </button>
-                        )}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            muteNotification(notif.id);
-                          }}
-                          className="p-1.5 rounded-lg hover:bg-muted transition-colors"
-                          title={notif.muted ? 'Unmute' : 'Mute'}
-                        >
-                          {notif.muted ? (
-                            <Volume2 className="w-4 h-4 text-[#0F3D91]" />
-                          ) : (
-                            <VolumeX className="w-4 h-4 text-muted-foreground" />
-                          )}
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteNotification(notif.id);
-                          }}
-                          className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </button>
-                      </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteNotification(notif.id);
+                            }}
+                            className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </button>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}

@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Poppins:wght@600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Poppins:wght@400;500;600;700;800;900&display=swap');
 
 @layer base {
   :root {
@@ -90,7 +90,7 @@
   h4,
   h5,
   h6 {
-    @apply font-heading tracking-tight font-bold;
+    @apply font-heading tracking-tight font-semibold;
   }
 }
 
@@ -99,7 +99,7 @@
 
   /* Page header standardisation */
   .page-header-title {
-    @apply text-3xl md:text-4xl font-heading font-black text-slate-900 leading-tight tracking-tight uppercase;
+    @apply text-3xl md:text-4xl font-heading font-semibold text-slate-900 leading-[1.1] tracking-tight;
   }
 
   /* Brand gradient — Deep Blue to Teal */
@@ -114,12 +114,12 @@
 
   /* CTA Button — Skitech Orange */
   .btn-cta {
-    @apply bg-[#FF7A00] hover:bg-orange-600 text-white font-black rounded-2xl transition-all duration-200 shadow-lg hover:shadow-[#FF7A00]/30;
+    @apply bg-[#FF7A00] hover:bg-orange-600 text-white font-semibold rounded-2xl transition-all duration-200 shadow-lg hover:shadow-[#FF7A00]/30;
   }
 
   /* Primary Button — Deep Blue */
   .btn-primary {
-    @apply bg-[#0F3D91] hover:bg-[#0A2560] text-white font-bold rounded-2xl transition-all duration-200 shadow-sm;
+    @apply bg-[#0F3D91] hover:bg-[#0A2560] text-white font-medium rounded-2xl transition-all duration-200 shadow-sm;
   }
 
   /* Card image aspect ratio */

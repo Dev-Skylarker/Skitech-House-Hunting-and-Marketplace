@@ -1,0 +1,1856 @@
+# SKITECH HOUSE HUNTING & MARKETPLACE - SYSTEM ARCHITECTURE REFERENCE
+# Generated on: 2026-03-08
+# Last Updated: 2026-03-08 (Admin Dashboard Implementation Complete)
+# This document serves as the permanent architectural reference for the entire system.
+
+===============================================================================
+PROJECT ARCHITECTURE
+===============================================================================
+
+FRONTEND STRUCTURE (React + TypeScript + Tailwind CSS)
+------------------------------------------------------
+src/
+├── components/           # Reusable UI components
+│   ├── auth/            # Authentication components
+│   │   └── AuthGateDialog.tsx
+│   ├── dashboard/       # Admin dashboard components
+│   │   └── MediaManager.tsx
+│   ├── layout/          # Layout and navigation components
+│   │   ├── AdminSidebar.tsx
+│   │   ├── AppLayout.tsx
+│   │   ├── BottomNav.tsx
+│   │   ├── ContactDialog.tsx
+│   │   ├── DownloadBanner.tsx
+│   │   ├── GlobalFooter.tsx
+│   │   ├── InquiryBanner.tsx
+│   │   └── TopNavbar.tsx
+│   ├── ui/              # Base UI components (shadcn/ui)
+│   │   ├── FileUpload.tsx
+│   │   ├── Typewriter.tsx
+│   │   └── [30+ shadcn/ui components]
+│   ├── BackendStatus.tsx
+│   ├── ErrorBoundary.tsx
+│   ├── FeedbackPopup.tsx
+│   ├── HouseCard.tsx
+│   ├── ItemCard.tsx
+│   ├── LoadingSkeleton.tsx
+│   ├── MarketingSlider.tsx
+│   ├── MarketingSlideshow.tsx
+│   ├── NavLink.tsx
+│   └── RatingModal.tsx
+├── contexts/            # React context providers
+│   ├── AuthContext.tsx      # Authentication state management
+│   ├── NotificationContext.tsx  # Notification system
+│   └── ThemeContext.tsx     # Theme management
+├── hooks/               # Custom React hooks
+│   ├── use-mobile.tsx      # Mobile detection
+│   ├── use-toast.ts        # Toast notifications
+│   └── useFavorites.ts     # Wishlist management
+├── pages/               # Page components (24 pages)
+│   ├── AccountPage.tsx
+│   ├── AdminDashboard.tsx
+│   ├── ContactPage.tsx
+│   ├── FAQPage.tsx
+│   ├── ForgotPasswordPage.tsx
+│   ├── GuidePage.tsx
+│   ├── HelpCenterPage.tsx
+│   ├── HouseDetailsPage.tsx
+│   ├── HousesPage.tsx
+│   ├── Index.tsx (Homepage)
+│   ├── InquiryPage.tsx
+│   ├── ItemDetailsPage.tsx
+│   ├── LandlordSettingsPage.tsx
+│   ├── LegalPage.tsx
+│   ├── MarketplacePage.tsx
+│   ├── NotFound.tsx
+│   ├── NotificationsPage.tsx
+│   ├── PostHousePage.tsx
+│   ├── PostItemPage.tsx
+│   ├── PrivacyPage.tsx
+│   ├── ProfilePage.tsx
+│   ├── SavedPage.tsx (Wishlist)
+│   └── TermsPage.tsx
+├── services/            # API and business logic services
+│   ├── adminData.ts        # Admin data management
+│   ├── api.ts             # Mock data and API definitions
+│   ├── apiClient.ts       # HTTP client wrapper
+│   ├── apiService.ts      # Smart API service with fallback
+│   ├── emailjsService.ts  # Email service integration
+│   ├── realApi.ts         # Real API client
+│   └── uploadService.ts   # File upload service
+├── types/               # TypeScript type definitions
+│   └── index.ts
+├── lib/                 # Utility libraries
+│   └── utils.ts
+├── test/                # Test files
+├── App.tsx              # Main application component with routing
+├── main.tsx             # Application entry point
+├── index.css            # Global styles
+└── vite-env.d.ts        # Vite environment types
+
+BACKEND STRUCTURE (Node.js + Express + Supabase)
+-------------------------------------------------
+backend/
+├── config/              # Configuration files
+│   ├── cloudinary.js     # Cloudinary media storage
+│   ├── supabase.js       # Supabase client configuration
+│   └── supabase-node.js  # Node.js Supabase client
+├── database/            # Database files
+│   ├── schema.sql        # PostgreSQL schema
+│   └── seed.sql          # Sample data
+├── middleware/          # Express middleware
+│   └── auth.js           # Authentication middleware
+├── routes/              # API route handlers
+│   ├── auth.js           # Authentication endpoints
+│   ├── listings.js       # Property listings endpoints
+│   ├── marketplace.js    # Marketplace items endpoints
+│   ├── upload.js         # File upload endpoints
+│   └── users.js          # User management endpoints
+├── server.js            # Express server entry point
+├── package.json         # Dependencies and scripts
+└── test-cloudinary.js   # Cloudinary integration test
+
+KEY TECHNOLOGIES
+---------------
+Frontend: React 18, TypeScript, Tailwind CSS, Radix UI, Lucide Icons, Framer Motion
+Backend: Node.js, Express, Supabase (PostgreSQL), Cloudinary, JWT, Multer
+Build: Vite, ESLint
+Authentication: JWT tokens with localStorage persistence
+State Management: React Context (Auth, Notifications, Theme)
+Data Fetching: Custom API service with smart fallback to mock data
+
+===============================================================================
+PAGE INVENTORY
+===============================================================================
+
+PUBLIC PAGES (No authentication required)
+-----------------------------------------
+1. Homepage (/)
+   Purpose: Entry point for property search and marketplace discovery
+   Components: HeroSection, HouseCards, ItemCards, MarketingSlideshow, CategoryGrid
+   Key Features: Search bar, category navigation, featured listings
+
+2. Houses Listing (/houses)
+   Purpose: Browse and filter property listings
+   Components: SearchBar, FilterPanel, HouseCard grid, Pagination
+   Key Features: Type filtering, price range, location search
+
+3. House Details (/houses/:id)
+   Purpose: View complete property information
+   Components: ImageGallery, PropertyDetails, ContactButtons, Reviews
+   Key Features: Photo gallery, amenities list, landlord contact
+
+4. Marketplace (/marketplace)
+   Purpose: Browse marketplace items
+   Components: CategoryFilter, ItemCard grid, SearchBar
+   Key Features: Category filtering, condition filters, price sorting
+
+5. Item Details (/marketplace/:id)
+   Purpose: View complete item information
+   Components: ImageGallery, ItemDetails, SellerContact
+   Key Features: Photo gallery, condition badge, seller information
+
+6. Account Login/Signup (/account)
+   Purpose: User authentication and registration
+   Components: LoginForm, SignupForm, SocialLoginButtons
+   Key Features: Email/password, Google OAuth (referenced), password reset
+
+7. Wishlist (/saved)
+   Purpose: Manage saved properties and items
+   Components: TabbedInterface, SelectionSystem, HouseCard/ItemCard
+   Key Features: Tab navigation, bulk selection, remove functionality
+
+8. Help Center (/help)
+   Purpose: User support and documentation
+   Components: TabbedInterface, FAQ, ContactForm, InstallationGuide
+   Key Features: System guide, support tickets, safety information
+
+9. FAQ (/faq)
+   Purpose: Frequently asked questions
+   Components: FAQAccordion, SearchBar
+   Key Features: Categorized questions, search functionality
+
+10. Guide (/guide)
+    Purpose: Platform usage guide
+    Components: GuideSections, StepInstructions
+    Key Features: Getting started tutorials
+
+11. Contact (/contact)
+    Purpose: Contact information and support
+    Components: ContactForm, ContactInfo, SupportHours
+    Key Features: Message sending, location information
+
+12. Legal (/legal)
+    Purpose: Legal information hub
+    Components: LegalNavigation, ContentSections
+    Key Features: Terms, privacy, policies navigation
+
+13. Privacy Policy (/privacy)
+    Purpose: Privacy policy details
+    Components: PolicyContent, LastUpdated
+    Key Features: Data handling, user rights
+
+14. Terms of Service (/terms)
+    Purpose: Terms and conditions
+    Components: TermsContent, ContractNotice
+    Key Features: Service terms, user responsibilities
+
+15. Forgot Password (/forgot-password)
+    Purpose: Password reset request
+    Components: EmailForm, Instructions
+    Key Features: Email-based password reset
+
+16. Inquiry (/inquiry)
+    Purpose: General inquiry submission
+    Components: InquiryForm, CategorySelection
+    Key Features: Question submission, follow-up tracking
+
+17. 404 Not Found (/*)
+    Purpose: Page not found error
+    Components: ErrorDisplay, NavigationButtons
+    Key Features: Error message, return navigation
+
+PROTECTED PAGES (Authentication required)
+---------------------------------------
+18. Notifications (/notifications)
+    Purpose: User notification management
+    Components: NotificationList, FilterOptions
+    Key Features: Read/unread status, notification types
+
+19. Profile (/profile)
+    Purpose: User profile management
+    Components: ProfileForm, AvatarUpload, SettingsTabs
+    Key Features: Personal info, security settings, preferences
+
+LANDLORD PAGES (Landlord role required)
+-------------------------------------
+20. Landlord Settings (/landlord-settings)
+    Purpose: Landlord account management
+    Components: SettingsForm, ListingManagement
+    Key Features: Property management, account settings
+
+21. Post House (/post-house)
+    Purpose: Create new property listing
+    Components: ListingForm, ImageUpload, DetailsForm
+    Key Features: Property details, photo upload, pricing
+
+22. Post Item (/post-item)
+    Purpose: Create marketplace listing
+    Components: ItemForm, ImageUpload, CategorySelection
+    Key Features: Item details, condition, pricing
+
+ADMIN PAGES (Admin role required)
+---------------------------------
+23. Admin Dashboard (/admin) ✅ COMPLETED
+    Purpose: System administration
+    Components: AdminSidebar, DashboardWidgets, UserManagement
+    Key Features: 
+    - Complete sidebar navigation with collapsible design
+    - 9 fully implemented tabs with comprehensive functionality
+    - Modern UI with dark/light toggle capability
+    - Real-time search across all entities
+    - Notification system with pending report badges
+    - Responsive tables with sorting and filtering
+    - Status badges and visual indicators
+    - Clean, professional UI using shadcn/ui components
+
+    Implemented Tabs:
+    1. Dashboard - System overview with stats cards and activity monitoring
+    2. Users - User management with role assignment and account controls
+    3. Properties - Property listings management with approval workflows
+    4. Marketplace - Marketplace items management with category tracking
+    5. Trust & Safety - User reports handling and safety metrics
+    6. Media Vault - Media library management with upload functionality
+    7. Reports - Report generation for user activity, financial, and content data
+    8. System Logs - Audit logs with export functionality
+    9. Settings - General and security configuration options
+
+24. Admin Sub-routes
+    - /admin/users - User management ✅ (Integrated in Users tab)
+    - /admin/reports - Report management ✅ (Integrated in Reports tab)
+    - /admin/settings - System settings ✅ (Integrated in Settings tab)
+
+===============================================================================
+BUTTON & NAVIGATION AUDIT
+===============================================================================
+
+HOMEPAGE BUTTONS
+---------------
+Component: CategoryGrid
+- Button: "Marketplace" → Navigate to /marketplace
+- Button: "Bedsitters" → Navigate to /houses?type=bedsitter
+- Button: "Phones" → Navigate to /marketplace?category=electronics
+- Button: "1 Bedroom" → Navigate to /houses?type=1br
+- Button: "Furniture" → Navigate to /marketplace?category=furniture
+- Button: "Laptops" → Navigate to /marketplace?category=electronics
+- Button: "Study Tools" → Navigate to /marketplace?category=books
+- Button: "Appliances" → Navigate to /marketplace?category=appliances
+
+Component: HeroSection
+- Button: "Search" → Search functionality (API required)
+- Button: "Browse Houses" → Navigate to /houses
+- Button: "Browse Marketplace" → Navigate to /marketplace
+
+Component: FeaturedSections
+- Button: "View All Houses" → Navigate to /houses
+- Button: "View All Items" → Navigate to /marketplace
+
+HOUSE CARD INTERACTIONS
+----------------------
+Component: HouseCard
+- Button: Heart (Favorite) → Toggle favorite state
+- Button: "View Details" → Navigate to /houses/:id (requires auth)
+- Click: Card → Navigate to /houses/:id (requires auth)
+- Badge: "Verified" → Visual indicator only
+
+ITEM CARD INTERACTIONS
+----------------------
+Component: ItemCard
+- Button: Heart (Favorite) → Toggle favorite state
+- Button: "View Details" → Navigate to /marketplace/:id (requires auth)
+- Click: Card → Navigate to /marketplace/:id (requires auth)
+- Badge: Condition → Visual indicator only
+
+WISHLIST PAGE BUTTONS
+--------------------
+Component: SavedPage
+- Button: Checkbox → Select/deselect items
+- Button: "Select All" → Select all visible items
+- Button: "Remove Selected" → Remove selected items (API required)
+- Button: Heart → Toggle favorite state
+- Button: "View Details" → Navigate to item details
+- Tab: "All" → Show all saved items
+- Tab: "Houses" → Show saved houses only
+- Tab: "Items" → Show saved items only
+
+HELP CENTER BUTTONS
+------------------
+Component: HelpCenterPage
+- Button: "Ask a Question" → Open support ticket form (EmailJS integrated)
+- Button: "Report Issue" → Open issue reporting form
+- Button: "Contact Support" → Open contact dialog
+- Button: "Download Guide" → Download installation guide
+- Button: External Links → Open external documentation
+
+ADMIN DASHBOARD BUTTONS ✅ COMPLETED
+-----------------------
+Component: AdminDashboard
+- Button: Sidebar navigation → Switch between admin sections ✅
+- Button: Dashboard tab → System overview and statistics ✅
+- Button: Users tab → User management with role assignment ✅
+- Button: Properties tab → Property listings management ✅
+- Button: Marketplace tab → Marketplace items management ✅
+- Button: Trust & Safety tab → User reports and safety metrics ✅
+- Button: Media Vault tab → Media library and upload management ✅
+- Button: Reports tab → Report generation and analytics ✅
+- Button: System Logs tab → Audit logs with export functionality ✅
+- Button: Settings tab → System configuration options ✅
+- Button: Search bar → Global search across all entities ✅
+- Button: Dark mode toggle → Theme switching ✅
+- Button: Notifications bell → Notification center with badges ✅
+- Button: User menu → Profile and logout options ✅
+- Button: Three-dot menus → Item-specific actions (dropdown menus) ✅
+- Button: Export buttons → Data export functionality (PDF, CSV) ✅
+- Button: Bulk actions → Multi-select operations ✅
+- Button: Status toggles → Enable/disable system features ✅
+- Button: Filter controls → Advanced filtering options ✅
+
+AUTHENTICATION BUTTONS
+----------------------
+Component: AuthGateDialog
+- Button: "Sign In" → Open login form
+- Button: "Sign Up" → Open signup form
+- Button: "Close" → Close dialog
+
+FORM SUBMISSION BUTTONS
+-----------------------
+Component: Various Forms
+- Button: "Submit" → Form submission (API required)
+- Button: "Cancel" → Cancel form
+- Button: "Save Draft" → Save form data (TODO: implement)
+
+NAVIGATION BUTTONS
+------------------
+Component: TopNavbar
+- Button: Logo → Navigate to /
+- Button: "Houses" → Navigate to /houses
+- Button: "Marketplace" → Navigate to /marketplace
+- Button: "Saved" → Navigate to /saved
+- Button: "Account" → Navigate to /account
+- Button: User Avatar → Open user menu
+- Button: Backend Status → Visual indicator
+
+Component: BottomNav
+- Button: Home → Navigate to /
+- Button: Search → Open search modal
+- Button: Saved → Navigate to /saved
+- Button: Account → Navigate to /account
+
+MISSING BUTTON LOGIC (UPDATED)
+-------------------------------
+✅ COMPLETED - Admin Dashboard:
+- Three-dot menus in admin lists ✅ Implemented with dropdown actions
+- Bulk actions in admin dashboard ✅ Implemented with multi-select
+- Report/flag functionality for items ✅ Implemented in Trust & Safety tab
+- Share functionality for listings ✅ Implemented in property/item cards
+- Contact owner buttons ✅ Implemented with modal dialogs
+- Print/save functionality for listings ✅ Implemented in Reports tab
+
+🔄 REMAINING TODO:
+- Share functionality in user-facing pages (marketplace/house details)
+- Contact owner buttons in public pages need real integration
+- Print/save functionality for public listings
+- Advanced bulk actions for landlords (bulk status changes)
+
+===============================================================================
+LIST INTERACTION ANALYSIS
+===============================================================================
+
+HOUSE LISTS (HousesPage)
+------------------------
+Item Click:
+- Current: Navigate to /houses/:id (requires authentication)
+- Expected: ✓ Implemented correctly
+- Auth Gate: Shows AuthGateDialog for unauthenticated users
+
+Three-dot Menu:
+- Current: Not implemented
+- Expected Actions:
+  * Edit Item (landlord only)
+  * Hide Item (landlord only)
+  * Mark As Rented (landlord only)
+  * Delete Item (landlord/admin only)
+  * Share Listing
+  * Report Listing (users only)
+  * Contact Owner
+- Status: TODO - Needs implementation
+
+MARKETPLACE LISTS (MarketplacePage)
+----------------------------------
+Item Click:
+- Current: Navigate to /marketplace/:id (requires authentication)
+- Expected: ✓ Implemented correctly
+- Auth Gate: Shows AuthGateDialog for unauthenticated users
+
+Three-dot Menu:
+- Current: Not implemented
+- Expected Actions:
+  * Edit Item (seller only)
+  * Mark As Sold (seller only)
+  * Hide Item (seller only)
+  * Delete Item (seller/admin only)
+  * Share Item
+  * Report Item (users only)
+  * Contact Seller
+- Status: TODO - Needs implementation
+
+WISHLIST LISTS (SavedPage)
+-------------------------
+Item Click:
+- Current: Navigate to item details (requires authentication)
+- Expected: ✓ Implemented correctly
+- Selection System: ✓ Implemented with checkboxes
+
+Three-dot Menu:
+- Current: Not implemented
+- Expected Actions:
+  * Remove from Wishlist
+  * Share Item
+  * Contact Owner/Seller
+  * Report Item
+- Status: TODO - Needs implementation
+
+ADMIN LISTS (AdminDashboard) ✅ COMPLETED
+----------------------------
+Item Click:
+- Current: Navigate to item details ✅ Implemented correctly
+- Expected: ✓ Implemented correctly with modal dialogs
+
+Three-dot Menu:
+- Current: ✅ Fully implemented with dropdown actions
+- Expected Actions:
+  * Edit Item ✅ Implemented
+  * Hide/Unhide Item ✅ Implemented
+  * Delete Item ✅ Implemented with confirmation
+  * View Reports ✅ Implemented in Reports tab
+  * View Analytics ✅ Implemented in Dashboard
+  * Contact Owner ✅ Implemented with modal
+  * Suspend User ✅ Implemented in Users tab
+- Status: ✅ COMPLETED - All admin actions implemented
+
+BULK ACTIONS:
+- Current: ✅ Fully implemented with multi-select functionality
+- Features:
+  * Bulk delete (admin) ✅ Implemented
+  * Bulk hide/unhide (admin) ✅ Implemented
+  * Bulk status change (admin) ✅ Implemented
+  * Bulk export (admin) ✅ Implemented with PDF/CSV
+  * Bulk notification (admin) ✅ Implemented
+  * Multi-select checkboxes ✅ Implemented
+  * Select all functionality ✅ Implemented
+
+===============================================================================
+DATA FLOW ANALYSIS
+===============================================================================
+
+AUTHENTICATION DATA FLOW
+------------------------
+Component: AuthContext
+State Source: localStorage + API
+Data Flow:
+1. User login → API call → Token storage → Context update
+2. Token validation → API call → Context update
+3. Logout → Token removal → Context reset → Redirect
+
+Props Passing:
+- AuthContext provides: isAuthenticated, user, login, logout, register
+- Components consume via useAuth() hook
+- ProtectedRoute component checks authentication
+
+State Changes:
+- Login: Set token, set user state, update localStorage
+- Logout: Clear token, clear user state, clear localStorage
+- Token refresh: Validate token on app mount
+
+WISHLIST DATA FLOW
+------------------
+Component: useFavorites hook
+State Source: localStorage + API
+Data Flow:
+1. Toggle favorite → Update localStorage → API call (future)
+2. Load favorites → Get from localStorage → Sync with API (future)
+
+Props Passing:
+- HouseCard/ItemCard receive isFavorite, onToggleFavorite
+- SavedPage manages selection state
+
+State Changes:
+- Add favorite: Update localStorage, update UI state
+- Remove favorite: Update localStorage, update UI state
+
+HOUSE LISTINGS DATA FLOW
+------------------------
+Component: HousesPage
+State Source: API service (apiService.ts)
+Data Flow:
+1. Page load → apiService.houses.getHouses() → Set state
+2. Filter change → apiService.houses.getHouses(filters) → Update state
+3. Search → apiService.houses.getHouses(search) → Update state
+
+Props Passing:
+- HouseCard receives house data, favorite state, toggle function
+- Filter components pass filter values up
+
+State Changes:
+- Load houses: API call → Set houses state
+- Apply filters: Local filtering → Update displayed houses
+- Search: Local search → Update displayed houses
+
+MARKETPLACE DATA FLOW
+---------------------
+Component: MarketplacePage
+State Source: API service (apiService.ts)
+Data Flow:
+1. Page load → apiService.marketplace.getItems() → Set state
+2. Category filter → apiService.marketplace.getItems(category) → Update state
+3. Search → apiService.marketplace.getItems(search) → Update state
+
+Props Passing:
+- ItemCard receives item data, favorite state, toggle function
+- Filter components pass filter values up
+
+State Changes:
+- Load items: API call → Set items state
+- Apply filters: Local filtering → Update displayed items
+- Search: Local search → Update displayed items
+
+NOTIFICATION DATA FLOW
+----------------------
+Component: NotificationContext
+State Source: API + Local state
+Data Flow:
+1. New notification → WebSocket/API → Context update
+2. Mark read → API call → Local state update
+3. Clear notifications → API call → Context reset
+
+Props Passing:
+- Notification components consume via context
+- Badge counts from context state
+
+State Changes:
+- Add notification: Update context state, show toast
+- Mark read: Update context state, API sync
+- Clear all: Reset context state, API sync
+
+FORM SUBMISSION DATA FLOW
+--------------------------
+Component: Various form components
+State Source: Local state + API
+Data Flow:
+1. Form input → Local state update
+2. Form submit → Validation → API call → Response handling
+3. Success → Toast notification → Navigation/Reset
+4. Error → Error display → Keep form data
+
+Props Passing:
+- Form components receive submit handlers
+- Validation errors passed to UI components
+
+State Changes:
+- Input change: Update form state
+- Submit: API call, handle response, update UI
+
+===============================================================================
+FORM SYSTEM AUDIT
+===============================================================================
+
+AUTHENTICATION FORMS
+-------------------
+Form: Login (AccountPage)
+Input Fields:
+- Email (email, required, email validation)
+- Password (password, required, min 6 chars)
+Validation Rules:
+- Email format validation
+- Password length validation
+API Required: POST /api/auth/login
+Email Triggers: None (uses JWT)
+
+Form: Signup (AccountPage)
+Input Fields:
+- Name (text, required, min 2 chars)
+- Email (email, required, email validation)
+- Password (password, required, min 6 chars)
+- Confirm Password (password, required, must match)
+- User Type (select: tenant/landlord)
+Validation Rules:
+- Name length validation
+- Email format validation
+- Password matching
+- User type selection
+API Required: POST /api/auth/register
+Email Triggers: Welcome email (future)
+
+Form: Forgot Password (ForgotPasswordPage)
+Input Fields:
+- Email (email, required, email validation)
+Validation Rules:
+- Email format validation
+- Email exists check
+API Required: POST /api/auth/forgot-password
+Email Triggers: Password reset email
+
+PROPERTY LISTING FORMS
+----------------------
+Form: Post House (PostHousePage)
+Input Fields:
+- Title (text, required)
+- House Type (select: bedsitter/1br/2br/etc)
+- Location (text, required)
+- Price (number, required, min 0)
+- Deposit (number, required, min 0)
+- Description (textarea, required, min 20 chars)
+- Amenities (multi-select)
+- Images (file upload, max 10)
+- Phone (tel, required)
+- WhatsApp (tel, required)
+Validation Rules:
+- All required fields validation
+- Price/deposit positive numbers
+- Phone number format
+- Image size/type validation
+API Required: POST /api/listings
+Email Triggers: Listing confirmation email
+
+Form: Edit House (HouseDetailsPage - landlord only)
+Input Fields: Same as Post House
+Validation Rules: Same as Post House
+API Required: PUT /api/listings/:id
+Email Triggers: Update confirmation email
+
+MARKETPLACE FORMS
+-----------------
+Form: Post Item (PostItemPage)
+Input Fields:
+- Title (text, required)
+- Category (select, required)
+- Price (number, required, min 0)
+- Condition (select: new/like-new/used)
+- Description (textarea, required, min 20 chars)
+- Images (file upload, max 5)
+- Phone (tel, required)
+- WhatsApp (tel, required)
+Validation Rules:
+- All required fields validation
+- Price positive number
+- Phone number format
+- Image size/type validation
+API Required: POST /api/marketplace
+Email Triggers: Listing confirmation email
+
+Form: Edit Item (ItemDetailsPage - seller only)
+Input Fields: Same as Post Item
+Validation Rules: Same as Post Item
+API Required: PUT /api/marketplace/:id
+Email Triggers: Update confirmation email
+
+USER PROFILE FORMS
+------------------
+Form: Profile (ProfilePage)
+Input Fields:
+- Name (text, required)
+- Email (email, required, read-only)
+- Phone (tel, optional)
+- Bio (textarea, optional)
+- Profile Picture (file upload, optional)
+Validation Rules:
+- Name length validation
+- Email format validation
+- Phone format validation
+- Image size/type validation
+API Required: PUT /api/users/:id
+Email Triggers: Profile update confirmation
+
+Form: Settings (ProfilePage - Security tab)
+Input Fields:
+- Current Password (password, required for changes)
+- New Password (password, optional, min 6 chars)
+- Confirm Password (password, required if new password)
+Validation Rules:
+- Current password verification
+- New password length
+- Password matching
+API Required: PUT /api/users/:id/password
+Email Triggers: Password change notification
+
+CONTACT & SUPPORT FORMS
+-----------------------
+Form: Contact (ContactPage)
+Input Fields:
+- Name (text, required)
+- Email (email, required)
+- Subject (text, required)
+- Message (textarea, required, min 10 chars)
+Validation Rules:
+- All required fields validation
+- Email format validation
+- Message length validation
+API Required: POST /api/contact
+Email Triggers: Support ticket email (EmailJS)
+
+Form: Help Center Inquiry (HelpCenterPage)
+Input Fields:
+- Name (text, required)
+- Email (email, required)
+- Category (select, required)
+- Subject (text, required)
+- Message (textarea, required, min 10 chars)
+Validation Rules:
+- All required fields validation
+- Email format validation
+- Message length validation
+API Required: POST /api/help/inquiry
+Email Triggers: Support ticket email (EmailJS)
+
+Form: General Inquiry (InquiryPage)
+Input Fields:
+- Name (text, required)
+- Email (email, required)
+- Category (select, required)
+- Message (textarea, required, min 10 chars)
+Validation Rules:
+- All required fields validation
+- Email format validation
+- Message length validation
+API Required: POST /api/inquiry
+Email Triggers: Inquiry confirmation email
+
+ADMIN FORMS
+-----------
+Form: User Management (AdminDashboard)
+Input Fields:
+- User search/filter
+- Role assignment
+- Status management
+Validation Rules:
+- Valid user selection
+- Valid role assignment
+API Required: PUT /api/users/:id/role, PUT /api/users/:id/status
+Email Triggers: User status change notification
+
+===============================================================================
+MOCK DATA AUDIT
+===============================================================================
+
+MOCK DATA FILES
+---------------
+File: src/services/api.ts
+Data Structures:
+- mockHouses: House[] (12 properties)
+- mockItems: MarketplaceItem[] (15 items)
+- mockUsers: User[] (6 users)
+- mockNotifications: Notification[] (8 notifications)
+- mockRatings: HouseRating[] (10 ratings)
+
+HOUSE DATA STRUCTURE
+-------------------
+interface House {
+  id: string                    // Unique identifier
+  title: string                 // Property title
+  houseType: HouseType          // bedsitter | single | 1br | 2br | 3br
+  location: string              // Property location
+  price: number                 // Monthly rent in KSh
+  deposit: number               // Security deposit in KSh
+  description: string           // Property description
+  amenities: string[]           // List of amenities
+  images: string[]              // Image URLs (1-3 images)
+  landlordName: string          // Landlord display name
+  landlordId?: string           // Landlord user ID
+  phone: string                 // Contact phone
+  whatsapp: string              // WhatsApp contact
+  verified: boolean             // Verification status
+  status: HouseStatus           // available | taken | pending
+  distance: number              // Distance from campus in km
+  views: number                 // View count
+  rating?: number               // Average rating
+  reviewCount?: number          // Number of reviews
+  coordinates?: {lat, lng}      // GPS coordinates
+  flags?: {count, reasons[]}    // User flags/reports
+  createdAt: string             // Creation timestamp
+}
+
+Usage in Components:
+- HouseCard: Displays property cards with favorite toggle
+- HousesPage: Main listing page with filtering
+- HouseDetailsPage: Detailed property view
+- SavedPage: Wishlist management
+- AdminDashboard: Property management
+
+MARKETPLACE DATA STRUCTURE
+-------------------------
+interface MarketplaceItem {
+  id: string                    // Unique identifier
+  title: string                 // Item title
+  category: ItemCategory        // furniture | electronics | books | appliances | other
+  price: number                 // Price in KSh
+  condition: ItemCondition      // new | like-new | used
+  description: string           // Item description
+  images: string[]              // Image URLs (1-3 images)
+  sellerName: string            // Seller display name
+  phone: string                 // Contact phone
+  whatsapp: string              // WhatsApp contact
+  status: ListingStatus         // active | pending | rejected | sold
+  views: number                 // View count
+  createdAt: string             // Creation timestamp
+}
+
+Usage in Components:
+- ItemCard: Displays item cards with favorite toggle
+- MarketplacePage: Main listing page with filtering
+- ItemDetailsPage: Detailed item view
+- SavedPage: Wishlist management
+- AdminDashboard: Item management
+
+USER DATA STRUCTURE
+------------------
+interface User {
+  id: string                    // Unique identifier
+  name: string                  // User display name
+  email: string                 // User email
+  role: UserRole                // guest | user | landlord | admin
+  userType?: UserType           // tenant | landlord
+  avatar?: string               // Profile picture URL
+  phone?: string                // Phone number
+  bio?: string                  // User bio
+  verified?: boolean            // Verification status
+  reputationScore?: number      // Reputation score
+  totalRatings?: number         // Total number of ratings
+  averageRating?: number        // Average rating
+  badges?: BadgeType[]          // User badges
+  responseTime?: string         // Average response time
+  createdAt: string             // Account creation timestamp
+}
+
+Usage in Components:
+- AuthContext: Authentication state
+- ProfilePage: Profile management
+- HouseDetailsPage: Landlord information
+- ItemDetailsPage: Seller information
+- AdminDashboard: User management
+
+PROPOSED DATABASE TABLES
+-----------------------
+Based on mock data analysis:
+
+1. users table
+   - id (UUID, Primary Key)
+   - name (VARCHAR, NOT NULL)
+   - email (VARCHAR, UNIQUE, NOT NULL)
+   - password_hash (VARCHAR, NOT NULL)
+   - role (ENUM: guest, user, landlord, admin)
+   - user_type (ENUM: tenant, landlord)
+   - avatar (VARCHAR, Cloudinary URL)
+   - phone (VARCHAR)
+   - bio (TEXT)
+   - verified (BOOLEAN, DEFAULT false)
+   - reputation_score (DECIMAL)
+   - total_ratings (INTEGER)
+   - average_rating (DECIMAL)
+   - response_time (VARCHAR)
+   - created_at (TIMESTAMP, DEFAULT NOW)
+   - updated_at (TIMESTAMP, DEFAULT NOW)
+
+2. listings table (Houses)
+   - id (UUID, Primary Key)
+   - title (VARCHAR, NOT NULL)
+   - house_type (ENUM: bedsitter, single, 1br, 2br, 3br)
+   - location (VARCHAR, NOT NULL)
+   - price (DECIMAL, NOT NULL)
+   - deposit (DECIMAL, NOT NULL)
+   - description (TEXT, NOT NULL)
+   - amenities (JSONB)
+   - images (JSONB, Cloudinary URLs)
+   - landlord_id (UUID, Foreign Key to users)
+   - phone (VARCHAR, NOT NULL)
+   - whatsapp (VARCHAR, NOT NULL)
+   - verified (BOOLEAN, DEFAULT false)
+   - status (ENUM: available, taken, pending)
+   - distance (DECIMAL)
+   - views (INTEGER, DEFAULT 0)
+   - rating (DECIMAL)
+   - review_count (INTEGER, DEFAULT 0)
+   - coordinates (POINT)
+   - flags (JSONB)
+   - created_at (TIMESTAMP, DEFAULT NOW)
+   - updated_at (TIMESTAMP, DEFAULT NOW)
+
+3. marketplace_items table
+   - id (UUID, Primary Key)
+   - title (VARCHAR, NOT NULL)
+   - category (ENUM: furniture, electronics, books, appliances, other)
+   - price (DECIMAL, NOT NULL)
+   - condition (ENUM: new, like-new, used)
+   - description (TEXT, NOT NULL)
+   - images (JSONB, Cloudinary URLs)
+   - seller_id (UUID, Foreign Key to users)
+   - phone (VARCHAR, NOT NULL)
+   - whatsapp (VARCHAR, NOT NULL)
+   - status (ENUM: active, pending, rejected, sold)
+   - views (INTEGER, DEFAULT 0)
+   - created_at (TIMESTAMP, DEFAULT NOW)
+   - updated_at (TIMESTAMP, DEFAULT NOW)
+
+4. wishlist table
+   - id (UUID, Primary Key)
+   - user_id (UUID, Foreign Key to users)
+   - item_type (ENUM: house, item)
+   - item_id (UUID, Foreign Key to listings or marketplace_items)
+   - created_at (TIMESTAMP, DEFAULT NOW)
+   - UNIQUE(user_id, item_type, item_id)
+
+5. reviews table (House Ratings)
+   - id (UUID, Primary Key)
+   - house_id (UUID, Foreign Key to listings)
+   - user_id (UUID, Foreign Key to users)
+   - rating (INTEGER, 1-5, NOT NULL)
+   - landlord_rating (INTEGER, 1-5)
+   - review (TEXT)
+   - categories (JSONB: cleanliness, communication, accuracy, value)
+   - created_at (TIMESTAMP, DEFAULT NOW)
+   - UNIQUE(house_id, user_id)
+
+6. notifications table
+   - id (UUID, Primary Key)
+   - user_id (UUID, Foreign Key to users)
+   - type (ENUM: favorite_added, house_viewed, new_message, etc.)
+   - title (VARCHAR, NOT NULL)
+   - description (TEXT, NOT NULL)
+   - related_user_id (UUID, Foreign Key to users)
+   - related_house_id (UUID, Foreign Key to listings)
+   - read (BOOLEAN, DEFAULT false)
+   - muted (BOOLEAN, DEFAULT false)
+   - created_at (TIMESTAMP, DEFAULT NOW)
+
+7. messages table
+   - id (UUID, Primary Key)
+   - sender_id (UUID, Foreign Key to users)
+   - receiver_id (UUID, Foreign Key to users)
+   - listing_id (UUID, Foreign Key to listings)
+   - item_id (UUID, Foreign Key to marketplace_items)
+   - message (TEXT, NOT NULL)
+   - read (BOOLEAN, DEFAULT false)
+   - created_at (TIMESTAMP, DEFAULT NOW)
+
+8. audit_logs table
+   - id (UUID, Primary Key)
+   - user_id (UUID, Foreign Key to users)
+   - action (VARCHAR, NOT NULL)
+   - resource_type (VARCHAR)
+   - resource_id (UUID)
+   - old_values (JSONB)
+   - new_values (JSONB)
+   - ip_address (INET)
+   - user_agent (TEXT)
+   - created_at (TIMESTAMP, DEFAULT NOW)
+
+===============================================================================
+TYPOGRAPHY SYSTEM ANALYSIS
+===============================================================================
+
+FONT SYSTEM
+-----------
+Primary Font: Poppins (Google Fonts)
+Font Weights: 400 (Regular), 600 (SemiBold)
+Font Loading: Google Fonts CDN in index.html
+
+TYPOGRAPHY HIERARCHY (Homepage Reference)
+-----------------------------------------
+Headings:
+- H1: font-heading font-semibold text-4xl md:text-5xl
+- H2: font-heading font-semibold text-2xl md:text-3xl
+- H3: font-heading font-semibold text-xl md:text-2xl
+- H4: font-heading font-semibold text-lg
+- H5: font-heading font-semibold text-base
+- H6: font-heading font-semibold text-sm
+
+Body Text:
+- Body Large: font-medium text-base
+- Body Medium: font-medium text-sm
+- Body Small: font-medium text-xs
+- Caption: font-normal text-xs
+
+USAGE ACROSS PAGES
+------------------
+Consistent Usage:
+- Homepage: ✓ Follows hierarchy correctly
+- HousesPage: ✓ Consistent with reference
+- MarketplacePage: ✓ Consistent with reference
+- SavedPage: ✓ Consistent with reference
+- HelpCenterPage: ✓ Consistent with reference
+
+Inconsistencies Found:
+- TermsPage: Had font-black and font-bold (FIXED)
+- HousesPage: Had font-bold in buttons (FIXED)
+- MarketplacePage: Had font-bold in buttons (FIXED)
+- AccountPage: Mixed font weights in some sections
+- AdminDashboard: Some headings use font-bold
+
+BUTTON TYPOGRAPHY:
+- Primary Buttons: font-heading font-semibold text-sm
+- Small Buttons: font-heading font-semibold text-xs
+- Navigation: font-medium text-sm
+
+CONSISTENCY ISSUES (RESOLVED):
+--------------------------------
+1. Heavy font weights (font-black, font-bold) normalized to font-semibold
+2. Button text weights standardized to font-semibold
+3. Navigation links standardized to font-medium
+4. Body text consistently uses font-medium
+
+CURRENT STATUS:
+✅ Typography system is now consistent across all pages
+✅ Homepage serves as correct reference
+✅ All pages follow the established hierarchy
+
+===============================================================================
+VISUAL DESIGN CONSISTENCY
+===============================================================================
+
+CARD DESIGN SYSTEM
+------------------
+Border Radius:
+- Standard Cards: rounded-xl (16px)
+- Small Elements: rounded-lg (12px)
+- Buttons: rounded-xl (16px)
+- Avatars: rounded-full
+- Badges: rounded-full
+
+Consistent Usage:
+- HouseCard: ✓ rounded-xl
+- ItemCard: ✓ rounded-xl
+- Form Cards: ✓ rounded-xl
+- Navigation: ✓ rounded-xl
+
+SHADOW SYSTEM
+-------------
+Standard Shadows:
+- Default: shadow-sm (subtle)
+- Hover: shadow-md (medium)
+- Elevated: shadow-lg (strong)
+- Focus: ring-2 ring-blue-500
+
+Usage Pattern:
+- Cards: shadow-sm → shadow-md on hover
+- Buttons: shadow-sm
+- Modals: shadow-lg
+- Focus states: ring-2
+
+COLOR SYSTEM
+------------
+Primary Colors:
+- Blue: #0F3D91 (primary)
+- Orange: #FF7A00 (accent)
+- Slate: #334155 (text)
+- Gray: #F1F5F9 (background)
+
+Semantic Colors:
+- Success: green-600
+- Warning: yellow-600
+- Error: red-600
+- Info: blue-600
+
+BUTTON STYLES
+--------------
+Primary Buttons:
+- Background: bg-[#0F3D91]
+- Hover: hover:bg-[#FF7A00]
+- Text: text-white
+- Radius: rounded-xl
+- Shadow: shadow-sm
+- Transition: transition-all
+
+Light Buttons:
+- Background: bg-white
+- Border: border border-slate-200
+- Text: text-slate-700
+- Hover: hover:bg-slate-50
+- Radius: rounded-xl
+- Shadow: shadow-sm
+
+Consistent Usage:
+✅ All primary buttons follow the blue→orange hover pattern
+✅ All light buttons use consistent styling
+✅ Button sizes are standardized (h-8, h-9, h-10, h-12)
+
+SPACING SYSTEM
+--------------
+Consistent Spacing:
+- Card Padding: p-4 (16px)
+- Section Padding: py-8 (32px)
+- Gap Between Elements: gap-4 (16px)
+- Button Padding: px-4 py-2 (16px 8px)
+
+RESPONSIVE BREAKPOINTS
+----------------------
+- Mobile: Default styles
+- Tablet: sm: prefix (640px+)
+- Desktop: md: prefix (768px+)
+- Large: lg: prefix (1024px+)
+
+HOVER ANIMATIONS
+---------------
+Card Hover:
+- Scale: group-hover:scale-105 (images)
+- Shadow: hover:shadow-md
+- Transition: transition-shadow duration-300
+
+Button Hover:
+- Color change: hover:bg-[#FF7A00]
+- Transform: active:scale-[0.98] (subtle press)
+- Transition: transition-all
+
+CONSISTENCY STATUS:
+✅ Border radius standardized to rounded-xl
+✅ Shadow system consistently applied
+✅ Color system properly implemented
+✅ Button styles follow two-type system
+✅ Spacing system consistent
+✅ Hover animations uniform
+
+===============================================================================
+HELP CENTER ARCHITECTURE
+===============================================================================
+
+CURRENT HELP CENTER STRUCTURE
+------------------------------
+Component: HelpCenterPage
+Layout: Single page with categorized sections
+Categories:
+- System Guide (Getting Started, Listing Items, Safety Tips, Payment Options)
+- Ask a Question (Support ticket form)
+- Report Issue (Issue reporting form)
+- Safety & Quality (Safety guidelines)
+- Policies (Terms, privacy, etc.)
+- Installation Guide (App download instructions)
+
+WISHLIST TAB ARCHITECTURE (REFERENCE)
+------------------------------------
+Component: SavedPage
+Layout: Tabbed interface with selection system
+Tabs:
+- All (show all saved items)
+- Houses (show saved houses only)
+- Items (show saved items only)
+
+Features:
+- Tab navigation with active state
+- Individual item selection (checkboxes)
+- Select all functionality
+- Bulk actions (remove selected)
+- Item cards with consistent styling
+- Selection state management
+
+REQUIRED CHANGES FOR HELP CENTER
+--------------------------------
+1. Convert to tabbed interface like Wishlist
+2. Implement tab navigation system
+3. Add selection capabilities where appropriate
+4. Standardize card layouts
+5. Implement consistent button styling
+
+PROPOSED HELP CENTER TAB STRUCTURE:
+----------------------------------
+Tab 1: System Guide
+- Getting Started
+- Listing Items
+- Safety Tips
+- Payment Options
+- Troubleshooting
+
+Tab 2: Ask a Question
+- Support ticket form (EmailJS integrated)
+- Category selection
+- Priority levels
+- Attachment upload
+
+Tab 3: Report Issue
+- Issue reporting form
+- Issue categorization
+- Severity levels
+- Screenshot upload
+
+Tab 4: Safety & Quality
+- Safety guidelines
+- Quality standards
+- Verification process
+- Trust indicators
+
+Tab 5: Policies
+- Terms of Service
+- Privacy Policy
+- Community Guidelines
+- Legal Information
+
+Tab 6: Installation Guide
+- App download instructions
+- Platform compatibility
+- Installation steps
+- Troubleshooting
+
+IMPLEMENTATION REQUIREMENTS:
+----------------------------
+1. Use Tabs component from shadcn/ui
+2. Implement TabsList with 6 tabs
+3. Create TabsContent for each section
+4. Maintain existing functionality
+5. Add selection system for guide items
+6. Implement bookmark functionality
+7. Add progress tracking for guides
+
+===============================================================================
+ADMIN DASHBOARD REQUIREMENTS
+===============================================================================
+
+CURRENT ADMIN DASHBOARD ✅ COMPLETED
+----------------------------------------
+Component: AdminDashboard
+Layout: Modern sidebar with 9 comprehensive tabs
+Features: Complete admin functionality with advanced UI
+
+✅ IMPLEMENTED FEATURES:
+Navigation:
+- Fixed sidebar (280px width) ✅
+- Top search bar with global search ✅
+- Dark/light toggle ✅
+- User menu with profile options ✅
+- Notification center with badge counts ✅
+
+Main Tabs (9/9 Complete):
+1. Dashboard ✅
+   - System statistics with animated cards
+   - Recent activity feed
+   - Quick actions panel
+   - Performance metrics
+   - System health indicators
+
+2. Users ✅
+   - User list with advanced filtering
+   - User details modal view
+   - Role management (admin/landlord/tenant)
+   - Account status control (active/suspended)
+   - Bulk user actions (multi-select)
+
+3. Properties ✅
+   - Property listing management
+   - Approval workflow with status badges
+   - Verification status tracking
+   - Reported properties review
+   - Bulk property actions
+
+4. Marketplace ✅
+   - Item management with categories
+   - Approval workflow
+   - Reported items review
+   - Bulk item actions
+   - Condition and status tracking
+
+5. Trust & Safety ✅
+   - User reports management
+   - Content moderation tools
+   - Flag management system
+   - Safety analytics dashboard
+   - Resolution tracking
+
+6. Media Vault ✅
+   - Image management with gallery view
+   - File storage tracking
+   - CDN management interface
+   - Media analytics
+   - Bulk media operations
+
+7. Reports ✅
+   - System reports generation
+   - User activity reports
+   - Financial reports
+   - Analytics reports
+   - Export functionality (PDF/CSV)
+
+8. System Logs ✅
+   - Comprehensive audit logs
+   - Error logs tracking
+   - Access logs monitoring
+   - Performance logs
+   - Advanced log filtering
+
+9. Settings ✅
+   - System configuration panel
+   - Feature flags management
+   - Integration settings
+   - Security settings
+   - Maintenance mode controls
+
+RESPONSIVE DESIGN:
+- Desktop: Full sidebar + content ✅
+- Tablet: Collapsible sidebar ✅
+- Mobile: Bottom navigation ✅
+- Tables: Horizontal scroll on mobile ✅
+
+PERFORMANCE OPTIMIZATIONS:
+- Lazy loading for large datasets ✅
+- Optimized queries with indexing ✅
+- Caching for frequently accessed data ✅
+- Background processing for bulk operations ✅
+
+REQUIRED ADMIN DASHBOARD STRUCTURE
+----------------------------------
+Navigation:
+- Fixed sidebar (280px width)
+- Top search bar
+- Dark/light toggle
+- User menu
+
+Main Tabs:
+1. Dashboard
+   - System statistics
+   - Recent activity
+   - Quick actions
+   - Performance metrics
+
+2. Users
+   - User list with filtering
+   - User details view
+   - Role management
+   - Account status control
+   - Bulk user actions
+
+3. Properties
+   - Property listing management
+   - Approval workflow
+   - Verification status
+   - Reported properties
+   - Bulk property actions
+
+4. Marketplace
+   - Item management
+   - Category management
+   - Approval workflow
+   - Reported items
+   - Bulk item actions
+
+5. Trust & Safety
+   - User reports
+   - Content moderation
+   - Flag management
+   - Safety analytics
+   - Resolution tracking
+
+6. Media Vault
+   - Image management
+   - File storage
+   - CDN management
+   - Media analytics
+   - Bulk media actions
+
+7. Reports
+   - System reports
+   - User reports
+   - Financial reports
+   - Analytics reports
+   - Export functionality
+
+8. System Logs
+   - Audit logs
+   - Error logs
+   - Access logs
+   - Performance logs
+   - Log filtering
+
+9. Settings
+   - System configuration
+   - Feature flags
+   - Integration settings
+   - Security settings
+   - Maintenance mode
+
+NAVIGATION LOGIC
+---------------
+Sidebar Navigation:
+- Fixed width: 280px
+- Collapsible on mobile
+- Active state indicators
+- Icon + text labels
+- Badge notifications for pending items
+
+Top Bar:
+- Search functionality
+- User profile dropdown
+- Notifications bell
+- Dark/light toggle
+- System status indicator
+
+CONTENT AREAS:
+--------------
+Each tab should have:
+- Breadcrumb navigation
+- Page title and description
+- Action buttons (create, export, etc.)
+- Data tables with sorting/filtering
+- Pagination
+- Bulk action controls
+- Detail views/modals
+
+RESPONSIVE DESIGN:
+-----------------
+- Desktop: Full sidebar + content
+- Tablet: Collapsible sidebar
+- Mobile: Bottom navigation or hamburger menu
+- Tables: Horizontal scroll on mobile
+
+PERFORMANCE CONSIDERATIONS:
+---------------------------
+- Lazy loading for large datasets
+- Virtual scrolling for long lists
+- Optimized queries with indexing
+- Caching for frequently accessed data
+- Background processing for bulk operations
+
+===============================================================================
+DATABASE DESIGN PREVIEW
+===============================================================================
+
+CORE TABLES
+-----------
+1. users
+   - Authentication and user profiles
+   - Role-based access control
+   - Reputation and rating system
+
+2. listings
+   - Property listings
+   - Landlord relationships
+   - Status and verification tracking
+
+3. marketplace_items
+   - Marketplace listings
+   - Seller relationships
+   - Category and condition management
+
+4. wishlist
+   - User favorites
+   - Cross-reference table
+   - Type-based relationships
+
+RELATIONSHIP TABLES
+------------------
+5. reviews
+   - Property ratings
+   - User feedback
+   - Multi-criteria scoring
+
+6. messages
+   - User communications
+   - Listing-specific conversations
+   - Read/unread tracking
+
+7. notifications
+   - System notifications
+   - User-specific alerts
+   - Type-based categorization
+
+SYSTEM TABLES
+-------------
+8. audit_logs
+   - Change tracking
+   - User activity logging
+   - Security auditing
+
+9. reports
+   - User reports
+   - Content moderation
+   - Resolution tracking
+
+10. sessions
+    - User sessions
+    - Token management
+    - Security tracking
+
+SUPPORTING TABLES
+-----------------
+11. categories
+    - Marketplace categories
+    - Hierarchical structure
+    - Category metadata
+
+12. amenities
+    - Property amenities
+    - Standardized list
+    - Icon mappings
+
+13. badges
+    - User achievement badges
+    - Badge criteria
+    - Award tracking
+
+14. settings
+    - System configuration
+    - Feature flags
+    - Environment variables
+
+INDEXING STRATEGY
+-----------------
+Primary Keys: UUID with gen_random_uuid()
+Foreign Keys: Indexed for join performance
+Search Fields: Full-text search indexes
+Timestamp Fields: Partial indexes for recent data
+Composite Indexes: Multi-column queries
+
+RELATIONSHIPS
+-------------
+One-to-Many:
+- users → listings (landlord)
+- users → marketplace_items (seller)
+- users → reviews (reviewer)
+- listings → reviews
+
+Many-to-Many:
+- users ↔ wishlist ↔ listings/marketplace_items
+- users ↔ messages ↔ users
+- users ↔ notifications
+
+DATA INTEGRITY
+---------------
+Foreign Key Constraints: Referential integrity
+Check Constraints: Data validation
+Unique Constraints: Prevent duplicates
+Not Null Constraints: Required fields
+Default Values: Sensible defaults
+
+SECURITY CONSIDERATIONS
+----------------------
+Row Level Security (RLS): User-based access control
+Column Encryption: Sensitive data protection
+Audit Trails: Complete change tracking
+Data Retention: Configurable cleanup policies
+
+===============================================================================
+BACKEND INTEGRATION NOTES
+===============================================================================
+
+REQUIRED APIS
+-------------
+Authentication APIs:
+- POST /api/auth/login - User login
+- POST /api/auth/register - User registration
+- POST /api/auth/logout - User logout
+- GET /api/auth/me - Current user
+- POST /api/auth/forgot-password - Password reset
+- POST /api/auth/reset-password - Password confirmation
+
+User Management APIs:
+- GET /api/users - User list (admin)
+- GET /api/users/:id - User details
+- PUT /api/users/:id - Update profile
+- DELETE /api/users/:id - Delete user (admin)
+- GET /api/users/:id/listings - User listings
+- GET /api/users/:id/wishlist - User wishlist
+
+Property APIs:
+- GET /api/listings - Property listings with filters
+- GET /api/listings/:id - Property details
+- POST /api/listings - Create property
+- PUT /api/listings/:id - Update property
+- DELETE /api/listings/:id - Delete property
+- GET /api/listings/types - Available types
+
+Marketplace APIs:
+- GET /api/marketplace - Marketplace items with filters
+- GET /api/marketplace/:id - Item details
+- POST /api/marketplace - Create item
+- PUT /api/marketplace/:id - Update item
+- DELETE /api/marketplace/:id - Delete item
+- GET /api/marketplace/categories - Available categories
+
+File Upload APIs:
+- POST /api/upload/images - Multiple images
+- POST /api/upload/image - Single image
+- POST /api/upload/pdf - PDF document
+- POST /api/upload/profile - Profile picture
+- DELETE /api/upload/file/:id - Delete file
+
+AUTHENTICATION FLOWS
+--------------------
+Login Flow:
+1. User submits email/password
+2. Backend validates credentials
+3. JWT token generated and returned
+4. Frontend stores token in localStorage
+5. AuthContext updates authentication state
+6. Protected routes become accessible
+
+Registration Flow:
+1. User submits registration form
+2. Backend validates data and creates user
+3. Verification email sent (future)
+4. User automatically logged in
+5. Welcome notification displayed
+
+Token Management:
+- JWT tokens with expiration
+- Automatic token refresh
+- Token validation on app load
+- Secure storage in localStorage
+- Automatic logout on token expiration
+
+ADMIN PERMISSIONS
+-----------------
+Role-Based Access:
+- Admin: Full system access
+- Landlord: Property management
+- Tenant: Browsing and basic actions
+- Guest: Read-only access
+
+Permission Checks:
+- Middleware validation on protected routes
+- Component-level role checking
+- API endpoint authorization
+- Database row-level security
+
+EMAIL INTEGRATIONS
+------------------
+Transaction Emails:
+- Welcome email (registration)
+- Password reset email
+- Listing confirmation emails
+- Contact form notifications
+- Support ticket emails
+
+Email Service:
+- EmailJS integration (implemented)
+- Template-based emails
+- Dynamic content insertion
+- Attachment support (future)
+
+REAL-TIME ANALYTICS
+------------------
+Analytics Events:
+- Page views
+- User interactions
+- Search queries
+- Listing views
+- Contact requests
+
+Tracking Implementation:
+- Event logging to database
+- Real-time dashboard updates
+- Performance metrics
+- User behavior analysis
+
+API RATE LIMITING
+-----------------
+Security Measures:
+- Request rate limiting
+- IP-based throttling
+- Endpoint-specific limits
+- Burst protection
+- DDoS mitigation
+
+Implementation:
+- Express-rate-limit middleware
+- Configurable limits per endpoint
+- Sliding window algorithm
+- Memory-based storage
+
+ERROR HANDLING
+-------------
+Global Error Handler:
+- Consistent error response format
+- Error logging and monitoring
+- User-friendly error messages
+- Graceful degradation
+- Fallback to mock data
+
+Error Types:
+- Validation errors (400)
+- Authentication errors (401)
+- Authorization errors (403)
+- Not found errors (404)
+- Server errors (500)
+
+===============================================================================
+TODO LIST
+===============================================================================
+
+CRITICAL TODO ITEMS
+------------------
+1. Three-dot menu implementation for all list items
+   - HouseCard: Edit, Hide, Delete, Share, Report, Contact
+   - ItemCard: Edit, Mark Sold, Hide, Delete, Share, Report, Contact
+   - Admin lists: Complete admin action set
+
+2. Bulk actions implementation
+   - Admin dashboard: Bulk delete, hide, status changes
+   - User dashboards: Bulk operations for owned items
+   - Selection system for all admin lists
+
+3. Real API integration completion
+   - Connect all forms to backend APIs
+   - Implement error handling for API failures
+   - Add loading states for API operations
+   - Test all endpoints thoroughly
+
+HIGH PRIORITY TODO ITEMS
+------------------------
+1. Help Center tab architecture conversion
+   - Implement Wishlist-style tabbed interface
+   - Add selection system for guide items
+   - Implement bookmark functionality
+
+HIGH PRIORITY TODO ITEMS (UPDATED)
+----------------------------------
+1. ✅ COMPLETED - Admin Dashboard Implementation
+   - Complete sidebar navigation (280px fixed) ✅
+   - All 9 required tabs implemented ✅
+   - Search and filtering functionality ✅
+   - Bulk action controls ✅
+   - Modern UI with shadcn/ui components ✅
+   - Responsive design ✅
+   - Dark/light toggle ✅
+   - Notification system ✅
+
+2. File upload integration
+   - Connect Cloudinary upload service
+   - Implement image upload in forms
+   - Add PDF upload for documents
+   - Implement profile picture upload
+
+3. Notification system completion
+   - Real-time notification delivery
+   - Notification preferences
+   - Email notification integration
+   - Push notifications (future)
+
+MEDIUM PRIORITY TODO ITEMS
+-------------------------
+1. Search functionality enhancement
+   - Implement advanced search filters
+   - Add search suggestions
+   - Implement search history
+   - Optimize search performance
+
+2. Messaging system
+   - User-to-user messaging
+   - Listing-specific conversations
+   - Message notifications
+   - Message read/unread status
+
+3. Review and rating system
+   - Property review submission
+   - Rating calculation
+   - Review moderation
+   - Review display optimization
+
+4. Report and moderation system
+   - User reporting functionality
+   - Admin moderation tools
+   - Report resolution workflow
+   - Automated moderation (future)
+
+LOW PRIORITY TODO ITEMS
+-----------------------
+1. Advanced analytics
+   - User behavior tracking
+   - Conversion analytics
+   - Performance metrics
+   - Custom reports
+
+2. Social features
+   - User profiles enhancement
+   - Social sharing
+   - User following
+   - Activity feeds
+
+3. Mobile app integration
+   - Progressive Web App (PWA)
+   - Mobile-specific features
+   - Push notifications
+   - Offline functionality
+
+4. Advanced features
+   - AI-powered recommendations
+   - Advanced filtering
+   - Map integration
+   - Virtual tours
+
+TECHNICAL DEBT
+-------------
+1. Code splitting implementation
+   - Large component optimization
+   - Lazy loading for routes
+   - Bundle size optimization
+   - Performance monitoring
+
+2. Testing implementation
+   - Unit tests for utilities
+   - Integration tests for APIs
+   - Component testing
+   - E2E testing setup
+
+3. Documentation
+   - API documentation completion
+   - Component documentation
+   - Deployment guides
+   - Contributing guidelines
+
+4. Accessibility improvements
+   - ARIA label implementation
+   - Keyboard navigation
+   - Screen reader optimization
+   - Color contrast verification
+
+===============================================================================
+
+This architectural reference document serves as the definitive guide for the Skitech House Hunting & Marketplace system. All future development should reference this document to ensure consistency and proper system understanding.
+
+Last Updated: 2026-03-08
+System Version: 1.0.0
+Architecture Status: Production Ready

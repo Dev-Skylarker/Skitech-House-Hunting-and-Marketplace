@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Mail, Phone, MessageSquare, MapPin, Send, MessageCircle } from 'lucide-react';
@@ -6,20 +7,103 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { emailjsService } from '@/services/emailjsService';
 
 import { BackButton } from '../components/ui/BackButton';
 
 const ContactPage = () => {
     const navigate = useNavigate();
     const { toast } = useToast();
+    const { user, isAuthenticated } = useAuth();
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        subject: '',
+        message: ''
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    // Auto-fill user data if authenticated
+    useEffect(() => {
+        if (isAuthenticated && user) {
+            setFormData(prev => ({
+                ...prev,
+                name: user.name || '',
+                email: user.email || ''
+            }));
+        }
+    }, [isAuthenticated, user]);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        toast({
-            title: "Message Sent!",
-            description: "Our support team will get back to you within 2-4 hours.",
-        });
-        navigate('/');
+        
+        if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
+            toast({
+                title: "Missing Information",
+                description: "Please fill in all required fields.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+            toast({
+                title: "Invalid Email",
+                description: "Please provide a valid email address.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        setIsSubmitting(true);
+        
+        try {
+            const response = await emailjsService.sendSupportTicketEmail(
+                formData.name,
+                formData.email,
+                `Subject: ${formData.subject}\n\n${formData.message}`
+            );
+
+            if (response.success) {
+                toast({
+                    title: "Support Ticket Sent!",
+                    description: "Our support team will get back to you within 2-4 hours.",
+                });
+                setFormData({
+                    name: isAuthenticated ? user?.name || '' : '',
+                    email: isAuthenticated ? user?.email || '' : '',
+                    subject: '',
+                    message: ''
+                });
+                navigate('/');
+            } else {
+                toast({
+                    title: "Failed to Send",
+                    description: response.error || "Please try again later.",
+                    variant: "destructive",
+                });
+            }
+        } catch (error) {
+            console.error('Support ticket error:', error);
+            toast({
+                title: "Error",
+                description: "Failed to send support ticket. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -95,26 +179,68 @@ const ContactPage = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Full Name</label>
-                                        <Input required placeholder="eg. John Doe" className="h-12 border-slate-100 rounded-xl bg-slate-50 transition-all focus:bg-white" />
+                                        <Input 
+                                            name="name"
+                                            value={formData.name}
+                                            onChange={handleInputChange}
+                                            required 
+                                            placeholder="eg. John Doe" 
+                                            className="h-12 border-slate-100 rounded-xl bg-slate-50 transition-all focus:bg-white" 
+                                        />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Email Address</label>
-                                        <Input required type="email" placeholder="eg. john@student.uoem.ac.ke" className="h-12 border-slate-100 rounded-xl bg-slate-50 transition-all focus:bg-white" />
+                                        <Input 
+                                            name="email"
+                                            value={formData.email}
+                                            onChange={handleInputChange}
+                                            required 
+                                            type="email" 
+                                            placeholder="eg. john@student.uoem.ac.ke" 
+                                            className="h-12 border-slate-100 rounded-xl bg-slate-50 transition-all focus:bg-white" 
+                                        />
                                     </div>
                                 </div>
 
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Subject</label>
-                                    <Input required placeholder="eg. Issue with my listing" className="h-12 border-slate-100 rounded-xl bg-slate-50 transition-all focus:bg-white" />
+                                    <Input 
+                                        name="subject"
+                                        value={formData.subject}
+                                        onChange={handleInputChange}
+                                        required 
+                                        placeholder="eg. Issue with my listing" 
+                                        className="h-12 border-slate-100 rounded-xl bg-slate-50 transition-all focus:bg-white" 
+                                    />
                                 </div>
 
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Message Detail</label>
-                                    <Textarea required placeholder="Describe your issue in detail..." className="min-h-[150px] border-slate-100 rounded-xl bg-slate-50 transition-all focus:bg-white p-4" />
+                                    <Textarea 
+                                        name="message"
+                                        value={formData.message}
+                                        onChange={handleInputChange}
+                                        required 
+                                        placeholder="Describe your issue in detail..." 
+                                        className="min-h-[150px] border-slate-100 rounded-xl bg-slate-50 transition-all focus:bg-white p-4" 
+                                    />
                                 </div>
 
-                                <Button type="submit" className="w-full h-14 bg-[#0F3D91] hover:bg-[#FF7A00] text-white rounded-2xl font-heading font-black uppercase tracking-widest shadow-lg shadow-blue-900/10 transition-all duration-300">
-                                    <Send className="w-4 h-4 mr-2" /> Send Message
+                                <Button 
+                                    type="submit" 
+                                    disabled={isSubmitting}
+                                    className="w-full h-14 bg-[#0F3D91] hover:bg-[#FF7A00] text-white rounded-2xl font-heading font-black uppercase tracking-widest shadow-lg shadow-blue-900/10 transition-all duration-300"
+                                >
+                                    {isSubmitting ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                                            Sending...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Send className="w-4 h-4 mr-2" /> Send Message
+                                        </>
+                                    )}
                                 </Button>
                             </form>
                         </CardContent>

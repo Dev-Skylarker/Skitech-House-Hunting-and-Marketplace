@@ -1,10 +1,17 @@
 import { useState } from 'react';
-import { Heart, Eye, Tag } from 'lucide-react';
+import { Heart, Eye, Tag, MoreHorizontal, Edit, CheckCircle, EyeOff, Trash2, Share2, Flag, Phone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthGateDialog } from '@/components/auth/AuthGateDialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import type { MarketplaceItem } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +21,14 @@ interface Props {
   onToggleFavorite?: (id: string) => void;
   size?: 'sm' | 'base';
   layout?: 'grid' | 'list';
+  showDetails?: boolean;
+  onEdit?: (item: MarketplaceItem) => void;
+  onMarkSold?: (id: string) => void;
+  onHide?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onShare?: (item: MarketplaceItem) => void;
+  onReport?: (item: MarketplaceItem) => void;
+  onContact?: (item: MarketplaceItem) => void;
 }
 
 const conditionColors: Record<string, string> = {
@@ -22,11 +37,25 @@ const conditionColors: Record<string, string> = {
   used: 'bg-muted text-muted-foreground',
 };
 
-export function ItemCard({ item, isFavorite, onToggleFavorite, size = 'sm', layout = 'grid' }: Props) {
+export function ItemCard({ 
+  item, 
+  isFavorite, 
+  onToggleFavorite, 
+  size = 'sm', 
+  layout = 'grid', 
+  showDetails = true,
+  onEdit,
+  onMarkSold,
+  onHide,
+  onDelete,
+  onShare,
+  onReport,
+  onContact
+}: Props) {
   const isBase = size === 'base';
   const isList = layout === 'list';
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [showAuthGate, setShowAuthGate] = useState(false);
 
   const handleDetailsClick = (e?: React.MouseEvent) => {
@@ -40,11 +69,58 @@ export function ItemCard({ item, isFavorite, onToggleFavorite, size = 'sm', layo
     }
   };
 
+  const handleEdit = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onEdit?.(item);
+  };
+
+  const handleMarkSold = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onMarkSold?.(item.id);
+  };
+
+  const handleHide = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onHide?.(item.id);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDelete?.(item.id);
+  };
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onShare?.(item);
+  };
+
+  const handleReport = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onReport?.(item);
+  };
+
+  const handleContact = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onContact?.(item);
+  };
+
+  // Check if user is seller or admin
+  const isSeller = user?.email === item.sellerName.toLowerCase().replace(' ', '.');
+  const isAdmin = user?.role === 'admin';
+  const canManage = isSeller || isAdmin;
+
   return (
     <>
       <div
-        onClick={() => handleDetailsClick()}
-        className={cn("block group cursor-pointer h-full", isList ? "w-full" : "")}
+        onClick={showDetails ? handleDetailsClick : undefined}
+        className={cn("block group h-full", showDetails ? "cursor-pointer" : "cursor-default", isList ? "w-full" : "")}
       >
         <div className={cn(
           "bg-card rounded-xl border border-border/60 overflow-hidden shadow-sm hover:shadow-md transition-shadow h-full flex",
@@ -79,6 +155,59 @@ export function ItemCard({ item, isFavorite, onToggleFavorite, size = 'sm', layo
                 />
               </button>
             )}
+            <div className="absolute top-2 right-12 flex gap-1">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    className="p-1.5 rounded-full bg-black/55 text-white backdrop-blur-sm hover:bg-black/70 transition-colors shadow-sm"
+                  >
+                    <MoreHorizontal className={cn(isBase ? 'w-4.5 h-4.5' : 'w-4 h-4')} />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {canManage && (
+                    <>
+                      <DropdownMenuItem onClick={handleEdit}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit Item
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleMarkSold}>
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Mark as Sold
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleHide}>
+                        <EyeOff className="mr-2 h-4 w-4" />
+                        Hide Item
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  <DropdownMenuItem onClick={handleShare}>
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share Item
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleContact}>
+                    <Phone className="mr-2 h-4 w-4" />
+                    Contact Seller
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleReport} className="text-red-600">
+                    <Flag className="mr-2 h-4 w-4" />
+                    Report Item
+                  </DropdownMenuItem>
+                  {canManage && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleDelete} className="text-red-600">
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete Item
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
           <div className={cn(isBase ? 'px-3 py-3' : 'px-2.5 py-2.5', 'flex-1 flex flex-col min-w-0')}>
             <div className="flex items-start justify-between gap-1.5 border-none">
@@ -107,7 +236,7 @@ export function ItemCard({ item, isFavorite, onToggleFavorite, size = 'sm', layo
               </div>
             )}
 
-            {!isList && (
+            {!isList && showDetails && (
               <div className="pt-2.5">
                 <Button
                   onClick={handleDetailsClick}
@@ -121,7 +250,7 @@ export function ItemCard({ item, isFavorite, onToggleFavorite, size = 'sm', layo
               </div>
             )}
           </div>
-          {isList && (
+          {isList && showDetails && (
             <div className="pr-4 py-4 self-center hidden sm:block">
               <Button
                 onClick={handleDetailsClick}

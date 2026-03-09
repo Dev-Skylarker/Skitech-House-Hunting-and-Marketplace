@@ -10,7 +10,7 @@ export function TopNavbar() {
   const isAdminRoute = location.pathname.startsWith('/admin');
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-100 rounded-b-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] px-6 py-5 sm:py-7 flex items-center justify-between mx-0">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-100 rounded-b-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] px-6 py-3 sm:py-4 flex items-center justify-between mx-0">
       <Link to={isAdminRoute ? "/admin" : "/"} className="flex items-center gap-3 sm:gap-6">
         {/* Animated Skitech Logo */}
         <motion.div

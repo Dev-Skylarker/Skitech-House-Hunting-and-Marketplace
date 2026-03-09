@@ -333,7 +333,6 @@ const Index = () => {
       <section className="px-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-heading font-bold text-base text-slate-900">Discovery Hub</h2>
-          <span className="text-[10px] font-bold text-[#FF7A00] uppercase tracking-widest bg-[#FF7A00]/10 px-2 py-0.5 rounded-full">Explore All</span>
         </div>
         <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide snap-x">
           {categories.map((cat) => (

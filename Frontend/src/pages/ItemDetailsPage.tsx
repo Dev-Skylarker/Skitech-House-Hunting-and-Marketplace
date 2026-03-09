@@ -1,23 +1,39 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, Phone, MessageCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Heart, Phone, MessageCircle, ChevronLeft, ChevronRight, Send, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { ItemCard } from '@/components/ItemCard';
 import { useFavorites } from '@/hooks/useFavorites';
-import { api, mockItems } from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
+import { apiService } from '@/services/apiService';
+import { emailjsService } from '@/services/emailjsService';
+import { mockItems } from '@/services/api';
 import type { MarketplaceItem } from '@/types';
 import { cn } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
 
 export default function ItemDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [item, setItem] = useState<MarketplaceItem | null>(null);
   const [imgIdx, setImgIdx] = useState(0);
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [contactMessage, setContactMessage] = useState('');
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const { favoriteItems, toggleFavoriteItem } = useFavorites();
+  const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (id) api.getItemById(id).then(setItem);
+    if (id) {
+      apiService.marketplace.getItem(id).then(response => {
+        if (response.success) {
+          setItem(response.item);
+        }
+      });
+    }
   }, [id]);
 
   useEffect(() => {
@@ -28,6 +44,62 @@ export default function ItemDetailsPage() {
       return () => clearInterval(interval);
     }
   }, [item]);
+
+  const handleSendMarketplaceInquiry = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Login Required",
+        description: "Please login to send marketplace inquiries.",
+        variant: "destructive",
+      });
+      navigate('/account');
+      return;
+    }
+
+    if (!item || !contactMessage.trim()) {
+      toast({
+        title: "Message Required",
+        description: "Please enter a message before sending.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSendingEmail(true);
+    
+    try {
+      const response = await emailjsService.sendMarketplaceOfferEmail(
+        item.title,
+        user?.name || 'Anonymous User',
+        user?.email || 'no-email@example.com',
+        contactMessage
+      );
+
+      if (response.success) {
+        toast({
+          title: "Inquiry Sent!",
+          description: "Your marketplace inquiry has been sent to the seller.",
+        });
+        setContactMessage('');
+        setShowContactForm(false);
+      } else {
+        toast({
+          title: "Failed to Send",
+          description: response.error || "Please try again later.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Email sending error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send inquiry. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
 
   if (!item) return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading...</div>;
 
@@ -111,15 +183,23 @@ export default function ItemDetailsPage() {
         <div className="bg-muted rounded-lg p-4">
           <h2 className="font-heading font-semibold text-sm mb-2">Seller</h2>
           <p className="font-medium">{item.sellerName}</p>
-          <div className="flex gap-2 mt-3">
-            <Button asChild className="flex-1 bg-secondary hover:bg-secondary/90">
-              <a href={`https://wa.me/${item.whatsapp.replace('+', '')}?text=${encodeURIComponent(`Hello, I got your contact from Skitech, and would like more details about: ${item.title}`)}`} target="_blank" rel="noopener noreferrer">
-                <MessageCircle className="w-4 h-4 mr-1" /> WhatsApp
-              </a>
+          <div className="flex flex-col gap-2 mt-3">
+            <Button 
+              onClick={() => setShowContactForm(true)}
+              className="w-full bg-[#0F3D91] hover:bg-[#0F3D91]/90"
+            >
+              <Send className="w-4 h-4 mr-1" /> Make Inquiry
             </Button>
-            <Button asChild variant="outline" className="flex-1">
-              <a href={`tel:${item.phone}`}><Phone className="w-4 h-4 mr-1" /> Call</a>
-            </Button>
+            <div className="flex gap-2">
+              <Button asChild className="flex-1 bg-secondary hover:bg-secondary/90">
+                <a href={`https://wa.me/${item.whatsapp.replace('+', '')}?text=${encodeURIComponent(`Hello, I got your contact from Skitech, and would like more details about: ${item.title}`)}`} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle className="w-4 h-4 mr-1" /> WhatsApp
+                </a>
+              </Button>
+              <Button asChild variant="outline" className="flex-1">
+                <a href={`tel:${item.phone}`}><Phone className="w-4 h-4 mr-1" /> Call</a>
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -139,6 +219,79 @@ export default function ItemDetailsPage() {
           </div>
         )}
       </div>
+
+      {/* Contact Form Modal */}
+      {showContactForm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-heading font-bold text-lg">Make an Inquiry</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowContactForm(false)}
+                className="h-8 w-8 p-0"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Item</p>
+                <p className="font-medium">{item.title}</p>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Seller</p>
+                <p className="font-medium">{item.sellerName}</p>
+              </div>
+
+              <div>
+                <label htmlFor="message" className="text-sm font-medium text-muted-foreground mb-1 block">
+                  Your Message *
+                </label>
+                <Textarea
+                  id="message"
+                  placeholder="Hi, I'm interested in this item. Could you provide more details about its condition and availability?"
+                  value={contactMessage}
+                  onChange={(e) => setContactMessage(e.target.value)}
+                  rows={4}
+                  className="resize-none"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowContactForm(false)}
+                  className="flex-1"
+                  disabled={isSendingEmail}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSendMarketplaceInquiry}
+                  disabled={isSendingEmail || !contactMessage.trim()}
+                  className="flex-1 bg-[#0F3D91] hover:bg-[#0F3D91]/90"
+                >
+                  {isSendingEmail ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-1" />
+                      Send Inquiry
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

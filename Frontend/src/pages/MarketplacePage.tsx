@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { ItemCard } from '@/components/ItemCard';
 import { useFavorites } from '@/hooks/useFavorites';
-import { api } from '@/services/api';
+import { apiService } from '@/services/apiService';
 import type { MarketplaceItem } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -52,11 +52,15 @@ export default function MarketplacePage() {
   }, [placeholderIndex]);
 
   useEffect(() => {
-    api.getItems({
+    apiService.marketplace.getItems({
       category: category !== 'all' ? category : undefined,
       condition: condition !== 'all' ? condition : undefined,
       search: search || undefined,
-    }).then(setItems);
+    }).then(response => {
+      if (response.success) {
+        setItems(response.items);
+      }
+    });
   }, [search, category, condition]);
 
   return (
@@ -78,7 +82,7 @@ export default function MarketplacePage() {
             />
             <button
               onClick={() => { }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 h-7 px-3 rounded-full bg-[#FF7A00] text-white flex items-center justify-center text-[10px] font-bold"
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-7 px-3 rounded-full bg-[#FF7A00] text-white flex items-center justify-center text-[10px] font-medium"
             >
               SEARCH
             </button>

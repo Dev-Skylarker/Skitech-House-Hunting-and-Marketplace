@@ -9,8 +9,6 @@ import { AdminSidebar } from './AdminSidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
-import { DownloadBanner } from './DownloadBanner';
-
 export function AppLayout() {
   const { isAuthenticated, user } = useAuth();
   const location = useLocation();
@@ -60,11 +58,10 @@ export function AppLayout() {
             <Outlet />
           </main>
 
-          {/* Safe Area Stack: Tiles (Footer) -> Download Banner -> Versioning */}
+          {/* Safe Area Stack: Tiles (Footer) -> Versioning */}
           <div className="flex flex-col gap-0 mt-8">
             {showBanner && <InquiryBanner />}
             {showFooter && <GlobalFooter />}
-            {showDownload && <DownloadBanner />}
           </div>
         </div>
 

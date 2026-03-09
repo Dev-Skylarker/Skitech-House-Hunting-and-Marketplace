@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { HouseCard } from '@/components/HouseCard';
 import { useFavorites } from '@/hooks/useFavorites';
-import { api } from '@/services/api';
+import { apiService } from '@/services/apiService';
 import type { House } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -48,13 +48,15 @@ export default function HousesPage() {
   }, [placeholderIndex]);
 
   useEffect(() => {
-    api.getHouses({ type: type !== 'all' ? type : undefined, search: search || undefined }).then(results => {
-      const sorted = [...results];
-      if (sort === 'price-low') sorted.sort((a, b) => a.price - b.price);
-      else if (sort === 'price-high') sorted.sort((a, b) => b.price - a.price);
-      else if (sort === 'distance') sorted.sort((a, b) => a.distance - b.distance);
-      else sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setHouses(sorted);
+    apiService.houses.getHouses({ type: type !== 'all' ? type : undefined, location: search || undefined }).then(response => {
+      if (response.success) {
+        const sorted = [...response.listings];
+        if (sort === 'price-low') sorted.sort((a, b) => a.price - b.price);
+        else if (sort === 'price-high') sorted.sort((a, b) => b.price - a.price);
+        else if (sort === 'distance') sorted.sort((a, b) => a.distance - b.distance);
+        else sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setHouses(sorted);
+      }
     });
   }, [search, type, sort]);
 
@@ -78,7 +80,7 @@ export default function HousesPage() {
             />
             <button
               onClick={() => { }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 h-7 px-3 rounded-full bg-[#FF7A00] text-white flex items-center justify-center text-[10px] font-bold"
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-7 px-3 rounded-full bg-[#FF7A00] text-white flex items-center justify-center text-[10px] font-medium"
             >
               SEARCH
             </button>
@@ -164,7 +166,7 @@ export default function HousesPage() {
           <div className="absolute top-0 right-0 w-40 h-40 bg-[#0F3D91]/5 rounded-full -mr-20 -mt-20 blur-3xl group-hover:scale-110 transition-transform" />
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10 text-center sm:text-left">
             <div className="space-y-2">
-              <h3 className="font-heading font-black text-[#0F3D91] text-xl leading-tight">
+              <h3 className="font-heading font-semibold text-[#0F3D91] text-xl leading-tight">
                 Did you miss your <span className="text-[#FF7A00]">desired home?</span>
               </h3>
               <p className="text-slate-500 text-sm font-medium">
@@ -172,7 +174,7 @@ export default function HousesPage() {
               </p>
             </div>
             <Link to="/inquiry?tab=houses">
-              <Button className="h-12 px-8 rounded-2xl bg-[#0F3D91] hover:bg-[#FF7A00] text-white font-bold uppercase tracking-widest transition-all shadow-lg shadow-blue-900/10">
+              <Button className="h-12 px-8 rounded-2xl bg-[#0F3D91] hover:bg-[#FF7A00] text-white font-semibold uppercase tracking-widest transition-all shadow-lg shadow-blue-900/10">
                 Request House
               </Button>
             </Link>
