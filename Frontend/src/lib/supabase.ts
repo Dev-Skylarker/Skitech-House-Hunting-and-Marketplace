@@ -1,97 +1,43 @@
-import { createClient } from '@supabase/supabase-js';
+// =====================================================================
+// MOCK MODE: All Supabase functionality is stubbed out.
+// No real network calls are made. Switch to realApi when ready.
+// =====================================================================
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+export const supabase = null as any; // Not used in mock mode
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
-}
+// Mock auth helpers — all return success shapes that AuthContext expects
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
-  },
-});
-
-// Auth helper functions
-export const signUp = async (email: string, password: string, name: string) => {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        name,
-        role: 'tenant', // Default role
-      },
-    },
-  });
-  
-  return { data, error };
+export const signUp = async (_email: string, _password: string, _name: string) => {
+  return { data: { user: null, session: null }, error: null };
 };
 
-export const signIn = async (email: string, password: string) => {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-  
-  return { data, error };
+export const signIn = async (_email: string, _password: string) => {
+  return { data: { user: null, session: null }, error: null };
 };
 
 export const signInWithGoogle = async () => {
-  // Get the selected role from localStorage (for sign-up)
-  const selectedRole = localStorage.getItem('google_signup_role') || 'tenant';
-  
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: `${window.location.origin}/account`,
-      queryParams: {
-        access_type: 'offline',
-        prompt: 'consent',
-      },
-      data: {
-        role: selectedRole,
-      },
-    },
-  });
-  
-  // Clear the stored role after use
-  localStorage.removeItem('google_signup_role');
-  
-  return { data, error };
+  return { data: {}, error: { message: 'Google sign-in not available in mock mode.' } };
 };
 
 export const signOut = async () => {
-  const { error } = await supabase.auth.signOut();
-  return { error };
+  return { error: null };
 };
 
-export const resetPassword = async (email: string) => {
-  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/reset-password`,
-  });
-  
-  return { data, error };
+export const resetPassword = async (_email: string) => {
+  return { data: {}, error: null };
 };
 
-export const updatePassword = async (newPassword: string) => {
-  const { data, error } = await supabase.auth.updateUser({
-    password: newPassword,
-  });
-  
-  return { data, error };
+export const updatePassword = async (_newPassword: string) => {
+  return { data: {}, error: null };
 };
 
 export const getCurrentUser = async () => {
-  const { data: { user }, error } = await supabase.auth.getUser();
-  return { user, error };
+  return { user: null, error: null };
 };
 
-export const onAuthStateChange = (callback: (event: string, session: any) => void) => {
-  return supabase.auth.onAuthStateChange(callback);
+export const onAuthStateChange = (_callback: (event: string, session: any) => void) => {
+  // Return a subscription object that does nothing
+  return { data: { subscription: { unsubscribe: () => {} } } };
 };
 
 export default supabase;
