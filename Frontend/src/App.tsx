@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
-import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { FullPageLoading } from "@/components/LoadingSkeleton";
@@ -24,13 +23,10 @@ const PostItemPage = lazy(() => import("./pages/PostItemPage"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 const LandlordSettingsPage = lazy(() => import("./pages/LandlordSettingsPage"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
-const LegalPage = lazy(() => import("./pages/LegalPage"));
 const InquiryPage = lazy(() => import("./pages/InquiryPage"));
 const HelpCenterPage = lazy(() => import("./pages/HelpCenterPage"));
-const FAQPage = lazy(() => import("./pages/FAQPage"));
-const GuidePage = lazy(() => import("./pages/GuidePage"));
-const ContactPage = lazy(() => import("./pages/ContactPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const LegalPage = lazy(() => import("./pages/LegalPage"));
 import NotFound from "./pages/NotFound";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import { useAuth } from "@/contexts/AuthContext";
@@ -55,9 +51,15 @@ const ProtectedRoute = ({ children, roles }: { children: React.ReactNode; roles?
     return <Navigate to="/account" state={{ from: location }} replace />;
   }
 
-  if (roles && user && !roles.includes(user.userType === 'landlord' ? 'landlord' : (user.role === 'admin' ? 'admin' : 'tenant'))) {
-    // Simplified role check for owner/admin
-    if (roles.includes('landlord') && user.userType !== 'landlord' && user.role !== 'admin') {
+  if (roles && user) {
+    const effectiveRole = user.role === 'admin'
+      ? 'admin'
+      : user.userType === 'landlord' || user.role === 'landlord'
+        ? 'landlord'
+        : 'resident';
+
+    const allowed = roles.includes(effectiveRole) || (effectiveRole === 'admin' && roles.includes('landlord'));
+    if (!allowed) {
       return <Navigate to="/account" replace />;
     }
   }
@@ -69,166 +71,148 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ErrorBoundary>
-      <AuthProvider>
-        <NotificationProvider>
-          <ThemeProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <Routes>
-                  <Route element={<AppLayout />}>
-                    <Route path="/" element={
+    <AuthProvider>
+      <NotificationProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <ErrorBoundary>
+              <Routes>
+                <Route element={<AppLayout />}>
+                  <Route path="/" element={
+                    <Suspense fallback={<FullPageLoading />}>
+                      <Index />
+                    </Suspense>
+                  } />
+                  <Route path="/houses" element={
+                    <Suspense fallback={<FullPageLoading />}>
+                      <HousesPage />
+                    </Suspense>
+                  } />
+                  <Route path="/houses/:id" element={
+                    <Suspense fallback={<FullPageLoading />}>
+                      <HouseDetailsPage />
+                    </Suspense>
+                  } />
+                  <Route path="/marketplace" element={
+                    <Suspense fallback={<FullPageLoading />}>
+                      <MarketplacePage />
+                    </Suspense>
+                  } />
+                  <Route path="/marketplace/:id" element={
+                    <Suspense fallback={<FullPageLoading />}>
+                      <ItemDetailsPage />
+                    </Suspense>
+                  } />
+                  <Route path="/saved" element={
+                    <Suspense fallback={<FullPageLoading />}>
+                      <SavedPage />
+                    </Suspense>
+                  } />
+                  <Route path="/notifications" element={
+                    <Suspense fallback={<FullPageLoading />}>
+                      <NotificationsPage />
+                    </Suspense>
+                  } />
+                  <Route path="/landlord-settings" element={
+                    <ProtectedRoute roles={['landlord']}>
                       <Suspense fallback={<FullPageLoading />}>
-                        <Index />
+                        <LandlordSettingsPage />
                       </Suspense>
-                    } />
-                    <Route path="/houses" element={
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/post-house" element={
+                    <ProtectedRoute roles={['landlord']}>
                       <Suspense fallback={<FullPageLoading />}>
-                        <HousesPage />
+                        <PostHousePage />
                       </Suspense>
-                    } />
-                    <Route path="/houses/:id" element={
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/post-item" element={
+                    <ProtectedRoute>
                       <Suspense fallback={<FullPageLoading />}>
-                        <HouseDetailsPage />
+                        <PostItemPage />
                       </Suspense>
-                    } />
-                    <Route path="/marketplace" element={
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin" element={
+                    <ProtectedRoute roles={['admin']}>
                       <Suspense fallback={<FullPageLoading />}>
-                        <MarketplacePage />
+                        <AdminDashboard />
                       </Suspense>
-                    } />
-                    <Route path="/marketplace/:id" element={
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/users" element={
+                    <ProtectedRoute roles={['admin']}>
                       <Suspense fallback={<FullPageLoading />}>
-                        <ItemDetailsPage />
+                        <AdminDashboard />
                       </Suspense>
-                    } />
-
-                    {/* Public Routes */}
-                    <Route path="/saved" element={
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/reports" element={
+                    <ProtectedRoute roles={['admin']}>
                       <Suspense fallback={<FullPageLoading />}>
-                        <SavedPage />
+                        <AdminDashboard />
                       </Suspense>
-                    } />
-                    <Route path="/notifications" element={
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/admin/settings" element={
+                    <ProtectedRoute roles={['admin']}>
                       <Suspense fallback={<FullPageLoading />}>
-                        <NotificationsPage />
+                        <AdminDashboard />
                       </Suspense>
-                    } />
-                    <Route path="/landlord-settings" element={
-                      <ProtectedRoute roles={['landlord']}>
-                        <Suspense fallback={<FullPageLoading />}>
-                          <LandlordSettingsPage />
-                        </Suspense>
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/post-house" element={
-                      <ProtectedRoute roles={['landlord']}>
-                        <Suspense fallback={<FullPageLoading />}>
-                          <PostHousePage />
-                        </Suspense>
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/post-item" element={
-                      <ProtectedRoute>
-                        <Suspense fallback={<FullPageLoading />}>
-                          <PostItemPage />
-                        </Suspense>
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/admin" element={
-                      <ProtectedRoute roles={['admin']}>
-                        <Suspense fallback={<FullPageLoading />}>
-                          <AdminDashboard />
-                        </Suspense>
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/admin/users" element={
-                      <ProtectedRoute roles={['admin']}>
-                        <Suspense fallback={<FullPageLoading />}>
-                          <AdminDashboard />
-                        </Suspense>
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/admin/reports" element={
-                      <ProtectedRoute roles={['admin']}>
-                        <Suspense fallback={<FullPageLoading />}>
-                          <AdminDashboard />
-                        </Suspense>
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/admin/settings" element={
-                      <ProtectedRoute roles={['admin']}>
-                        <Suspense fallback={<FullPageLoading />}>
-                          <AdminDashboard />
-                        </Suspense>
-                      </ProtectedRoute>
-                    } />
-
-                    {/* Public Information */}
-                    <Route path="/account" element={
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/account" element={
+                    <Suspense fallback={<FullPageLoading />}>
+                      <AccountPage />
+                    </Suspense>
+                  } />
+                  <Route path="/profile" element={
+                    <ProtectedRoute>
                       <Suspense fallback={<FullPageLoading />}>
-                        <AccountPage />
+                        <ProfilePage />
                       </Suspense>
-                    } />
-                    <Route path="/profile" element={
-                      <ProtectedRoute>
-                        <Suspense fallback={<FullPageLoading />}>
-                          <ProfilePage />
-                        </Suspense>
-                      </ProtectedRoute>
-                    } />
-                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                    <Route path="/legal" element={
-                      <Suspense fallback={<FullPageLoading />}>
-                        <LegalPage />
-                      </Suspense>
-                    } />
-                    <Route path="/privacy" element={
-                      <Suspense fallback={<FullPageLoading />}>
-                        <LegalPage />
-                      </Suspense>
-                    } />
-                    <Route path="/terms" element={
-                      <Suspense fallback={<FullPageLoading />}>
-                        <LegalPage />
-                      </Suspense>
-    } />
-                    <Route path="/inquiry" element={
-                      <Suspense fallback={<FullPageLoading />}>
-                        <InquiryPage />
-                      </Suspense>
-                    } />
-                    <Route path="/help" element={
-                      <Suspense fallback={<FullPageLoading />}>
-                        <HelpCenterPage />
-                      </Suspense>
-                    } />
-                    <Route path="/faq" element={
-                      <Suspense fallback={<FullPageLoading />}>
-                        <FAQPage />
-                      </Suspense>
-                    } />
-                  <Route path="/guide" element={
-                      <Suspense fallback={<FullPageLoading />}>
-                        <GuidePage />
-                      </Suspense>
-                    } />
-                    <Route path="/contact" element={
-                      <Suspense fallback={<FullPageLoading />}>
-                        <ContactPage />
-                      </Suspense>
-                    } />
-                  </Route>
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            </TooltipProvider>
-          </ThemeProvider>
-        </NotificationProvider>
-      </AuthProvider>
-    </ErrorBoundary>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route path="/legal" element={
+                    <Suspense fallback={<FullPageLoading />}>
+                      <LegalPage />
+                    </Suspense>
+                  } />
+                  <Route path="/privacy" element={
+                    <Suspense fallback={<FullPageLoading />}>
+                      <LegalPage />
+                    </Suspense>
+                  } />
+                  <Route path="/terms" element={
+                    <Suspense fallback={<FullPageLoading />}>
+                      <LegalPage />
+                    </Suspense>
+                  } />
+                  <Route path="/inquiry" element={
+                    <Suspense fallback={<FullPageLoading />}>
+                      <InquiryPage />
+                    </Suspense>
+                  } />
+                  <Route path="/help" element={
+                    <Suspense fallback={<FullPageLoading />}>
+                      <HelpCenterPage />
+                    </Suspense>
+                  } />
+                  <Route path="/faq" element={<Navigate to="/help?tab=faq" replace />} />
+                  <Route path="/guide" element={<Navigate to="/help?tab=guide" replace />} />
+                  <Route path="/contact" element={<Navigate to="/help?tab=contact" replace />} />
+                </Route>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </ErrorBoundary>
+          </BrowserRouter>
+        </TooltipProvider>
+      </NotificationProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

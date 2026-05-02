@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { HouseCard } from '@/components/HouseCard';
 import { ItemCard } from '@/components/ItemCard';
 import { useFavorites } from '@/hooks/useFavorites';
-import { api } from '@/services/api';
+import { apiService } from '@/services/apiService';
 import { MarketingSlideshow } from '@/components/MarketingSlideshow';
 import { cn } from '@/lib/utils';
 import type { House, MarketplaceItem } from '@/types';
@@ -35,8 +35,12 @@ const Index = () => {
   const { favoriteHouses, favoriteItems, toggleFavoriteHouse, toggleFavoriteItem } = useFavorites();
 
   useEffect(() => {
-    api.getHouses().then(setHouses);
-    api.getItems().then(setItems);
+    apiService.houses.getHouses({ sponsoredOnly: true }).then(res => {
+      if (res.success) setHouses(res.listings);
+    });
+    apiService.marketplace.getItems({ sponsoredOnly: true }).then(res => {
+      if (res.success) setItems(res.items);
+    });
   }, []);
 
   useEffect(() => {

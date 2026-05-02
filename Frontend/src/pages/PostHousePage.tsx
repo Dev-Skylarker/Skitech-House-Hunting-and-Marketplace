@@ -188,69 +188,67 @@ export default function PostHousePage() {
         <div className="bg-white/95 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[40px] border border-white overflow-hidden">
           <form onSubmit={handleSubmit} className="divide-y divide-slate-100">
             {/* Step 1: Basic Info */}
-            <div className="p-8 lg:p-12 space-y-8">
-              <div className="flex items-center gap-4 mb-2">
+            <div className="p-8 lg:p-12 space-y-6 bg-white">
+              <div className="flex items-center gap-4 mb-6">
                 <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-[#0F3D91]">
                   <Building2 className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="font-heading font-bold text-xl text-slate-900">Basic Information</h2>
-                  <p className="text-sm text-slate-500">Essential details about your house</p>
+                  <h2 className="font-heading font-black text-xl text-[#0F3D91] uppercase tracking-tighter">Basic Information</h2>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Essential details about your house</p>
                 </div>
               </div>
 
               <div className="space-y-6">
-                <div className="grid gap-2">
-                  <Label className="text-sm font-bold text-slate-700">Listing Title</Label>
-                  <Input
-                    placeholder="e.g. Modern bedsitter with high-speed WiFi near main gate"
-                    required
-                    className="h-12 rounded-2xl text-slate-900 border-slate-200 focus:ring-[#0F3D91] focus:border-[#0F3D91] transition-all"
-                  />
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Listing Title</label>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                    <Input
+                      name="title"
+                      placeholder="e.g. Modern bedsitter with high-speed WiFi near main gate"
+                      required
+                      className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200"
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="grid gap-2">
-                    <Label className="text-sm font-bold text-slate-700">House Type</Label>
-                    <Select required>
-                      <SelectTrigger className="h-12 rounded-2xl border-slate-200">
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl">
-                        <SelectItem value="bedsitter">Bedsitter</SelectItem>
-                        <SelectItem value="single">Single room</SelectItem>
-                        <SelectItem value="1br">1 Bedroom</SelectItem>
-                        <SelectItem value="2br">2 Bedroom</SelectItem>
-                        <SelectItem value="3br">3 Bedroom</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label className="text-sm font-bold text-slate-700">Location</Label>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">House Type</label>
                     <div className="relative">
-                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <Home className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 z-10" />
+                      <Select required value={houseType} onValueChange={(value) => setHouseType(value)}>
+                        <SelectTrigger className="pl-10 h-12 rounded-2xl bg-slate-50 border-transparent focus:bg-white focus:border-slate-200">
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                          <SelectItem value="bedsitter">Bedsitter</SelectItem>
+                          <SelectItem value="single">Single room</SelectItem>
+                          <SelectItem value="1br">1 Bedroom</SelectItem>
+                          <SelectItem value="2br">2 Bedroom</SelectItem>
+                          <SelectItem value="3br">3 Bedroom</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Location</label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
                       <Input
+                        name="location"
                         placeholder="e.g. Kangaru Area"
                         required
-                        className="h-12 pl-11 rounded-2xl border-slate-200"
+                        className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200"
                       />
                     </div>
                   </div>
                 </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="grid gap-2">
-                    <Label className="text-sm font-bold text-slate-700">Location</Label>
-                    <div className="relative">
-                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <Input
-                        placeholder="e.g. Kangaru Area"
-                        required
-                        className="h-12 pl-11 rounded-2xl border-slate-200"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label className="text-sm font-bold text-slate-700">GPS Coordinates (Optional)</Label>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">GPS Coordinates (Optional)</label>
                     <div className="flex gap-2">
                       <Button
                         type="button"
@@ -258,39 +256,44 @@ export default function PostHousePage() {
                         disabled={isLocating}
                         variant="outline"
                         className={cn(
-                          "flex-1 h-12 rounded-xl border-dashed border-2 transition-all gap-2",
-                          coordinates ? "border-green-200 bg-green-50 text-green-700" : "border-slate-200 hover:border-[#0F3D91] hover:bg-blue-50"
+                          "flex-1 h-12 rounded-2xl transition-all gap-2 text-[10px] font-bold uppercase tracking-widest bg-slate-50 border-transparent hover:bg-white hover:border-slate-200",
+                          coordinates ? "bg-green-50 text-green-700 hover:bg-green-100 hover:border-green-200" : ""
                         )}
                       >
                         {isLocating ? (
                           <span className="animate-spin w-4 h-4 border-2 border-[#0F3D91] border-t-transparent rounded-full" />
                         ) : (
-                          <MapPin className={cn("w-4 h-4", coordinates ? "text-green-500" : "text-[#0F3D91]")} />
+                          <MapPin className={cn("w-4 h-4", coordinates ? "text-green-500" : "text-slate-300")} />
                         )}
-                        {coordinates ? `Location Pinned (${coordinates.lat.toFixed(2)}, ${coordinates.lng.toFixed(2)})` : "Pin Current Location"}
+                        {coordinates ? `Pinned (${coordinates.lat.toFixed(2)}, ${coordinates.lng.toFixed(2)})` : "Pin Current Location"}
                       </Button>
                       {coordinates && (
                         <Button
                           type="button"
                           variant="ghost"
                           onClick={() => setCoordinates(null)}
-                          className="h-12 px-4 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50"
+                          className="h-12 w-12 p-0 rounded-2xl bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600"
                         >
-                          <Zap className="w-4 h-4 text-red-500" />
+                          <Zap className="w-4 h-4" />
                         </Button>
                       )}
                     </div>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="grid gap-2">
-                    <Label className="text-sm font-bold text-slate-700">Rent per Month (KSh)</Label>
-                    <Input type="number" placeholder="5,000" required className="h-12 rounded-2xl border-slate-200" />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label className="text-sm font-bold text-slate-700">Required Deposit (KSh)</Label>
-                    <Input type="number" placeholder="5,000" required className="h-12 rounded-2xl border-slate-200" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Rent (KSh)</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300">KES</span>
+                        <Input name="price" type="number" placeholder="5000" required className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Deposit (KSh)</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-300">KES</span>
+                        <Input name="deposit" type="number" placeholder="5000" required className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -417,29 +420,33 @@ export default function PostHousePage() {
             </div>
 
             {/* Step 3: Details & Amenities */}
-            <div className="p-8 lg:p-12 space-y-8">
-              <div className="flex items-center gap-4 mb-2">
+            <div className="p-8 lg:p-12 space-y-6">
+              <div className="flex items-center gap-4 mb-6">
                 <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-green-600">
                   <CheckCircle2 className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="font-heading font-bold text-xl text-slate-900">Features & Amenities</h2>
-                  <p className="text-sm text-slate-500">What makes your property special?</p>
+                  <h2 className="font-heading font-black text-xl text-[#0F3D91] uppercase tracking-tighter">Features & Amenities</h2>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">What makes your property special?</p>
                 </div>
               </div>
 
               <div className="space-y-8">
-                <div className="grid gap-2">
-                  <Label className="text-sm font-bold text-slate-700">Detailed Description</Label>
-                  <Textarea
-                    placeholder="Describe the room layout, water/electricity situation, shared areas, and any house rules (e.g. quiet hours)."
-                    required
-                    className="min-h-[150px] rounded-2xl border-slate-200 p-4"
-                  />
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Detailed Description</label>
+                  <div className="relative">
+                    <Info className="absolute left-3 top-3 w-4 h-4 text-slate-300" />
+                    <Textarea
+                      name="description"
+                      placeholder="Describe the room layout, water/electricity situation, shared areas, and any house rules (e.g. quiet hours)."
+                      required
+                      className="pl-10 rounded-2xl min-h-[150px] bg-slate-50 border-transparent focus:bg-white focus:border-slate-200 pt-3"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-4">
-                  <Label className="text-sm font-bold text-slate-700">Available Amenities</Label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Available Amenities</label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                     {amenitiesOptions.map(({ id, icon: Icon }) => (
                       <label
@@ -470,25 +477,31 @@ export default function PostHousePage() {
             </div>
 
             {/* Step 4: Contact */}
-            <div className="p-8 lg:p-12 space-y-8 bg-slate-50/30">
-              <div className="flex items-center gap-4 mb-2">
+            <div className="p-8 lg:p-12 space-y-6 bg-slate-50/30">
+              <div className="flex items-center gap-4 mb-6">
                 <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600">
                   <Phone className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="font-heading font-bold text-xl text-slate-900">Contact Channels</h2>
-                  <p className="text-sm text-slate-500">How should students reach you?</p>
+                  <h2 className="font-heading font-black text-xl text-[#0F3D91] uppercase tracking-tighter">Contact Channels</h2>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">How should students reach you?</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="grid gap-2">
-                  <Label className="text-sm font-bold text-slate-700">Phone Number (Direct)</Label>
-                  <Input placeholder="+254 700 000 000" required className="h-12 rounded-xl border-slate-200" />
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Phone Number (Direct)</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                    <Input name="phone" placeholder="+254 700 000 000" required className="pl-10 rounded-2xl h-12 bg-white border-transparent focus:bg-white focus:border-slate-200" />
+                  </div>
                 </div>
-                <div className="grid gap-2">
-                  <Label className="text-sm font-bold text-slate-700">WhatsApp Number</Label>
-                  <Input placeholder="+254 700 000 000" required className="h-12 rounded-xl border-slate-200" />
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">WhatsApp Number</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                    <Input name="whatsapp" placeholder="+254 700 000 000" required className="pl-10 rounded-2xl h-12 bg-white border-transparent focus:bg-white focus:border-slate-200" />
+                  </div>
                 </div>
               </div>
             </div>

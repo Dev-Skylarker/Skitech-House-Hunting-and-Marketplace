@@ -1,9 +1,9 @@
 export type HouseType = 'bedsitter' | 'single' | '1br' | '2br' | '3br';
-export type HouseStatus = 'available' | 'taken' | 'pending';
+export type HouseStatus = 'available' | 'taken' | 'pending' | 'rejected';
 export type ItemCondition = 'new' | 'like-new' | 'used';
 export type ItemCategory = 'furniture' | 'electronics' | 'books' | 'appliances' | 'other';
-export type UserRole = 'guest' | 'user' | 'landlord' | 'admin';
-export type UserType = 'tenant' | 'landlord';
+export type UserRole = 'resident' | 'landlord' | 'admin';
+export type UserType = 'resident' | 'landlord';
 export type ListingStatus = 'active' | 'pending' | 'rejected' | 'sold';
 export type NotificationType = 'favorite_added' | 'house_viewed' | 'new_message' | 'listing_approved' | 'listing_rejected' | 'system';
 export type BadgeType = 'superhost' | 'responsive' | 'clean' | 'communicative' | 'trusted' | 'top_rated';
@@ -30,6 +30,11 @@ export interface House {
   reviewCount?: number;
   coordinates?: { lat: number; lng: number };
   flags?: { count: number; reasons: string[] };
+  bio?: string;
+  reputationScore?: number;
+  badges?: string[];
+  responseTime?: string;
+  isSponsored: boolean;
   createdAt: string;
 }
 
@@ -45,6 +50,7 @@ export interface MarketplaceItem {
   phone: string;
   whatsapp: string;
   status: ListingStatus;
+  isSponsored: boolean;
   views: number;
   createdAt: string;
 }
@@ -58,6 +64,8 @@ export interface User {
   avatar?: string;
   phone?: string;
   bio?: string;
+  /** Stored in auth user_metadata when using Supabase (no profiles column). */
+  location?: string;
   verified?: boolean;
   reputationScore?: number;
   totalRatings?: number;

@@ -136,64 +136,73 @@ export default function PostItemPage() {
         <div className="bg-white/95 backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[40px] border border-white overflow-hidden">
           <form onSubmit={handleSubmit} className="divide-y divide-slate-100">
             {/* Step 1: Item Info */}
-            <div className="p-8 lg:p-12 space-y-8">
-              <div className="flex items-center gap-4 mb-2">
-                <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600">
+            <div className="p-8 lg:p-12 space-y-6 bg-white">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center text-[#FF7A00]">
                   <Tag className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="font-heading font-bold text-xl text-slate-900">Item Information</h2>
-                  <p className="text-sm text-slate-500">Tell us what you're selling</p>
+                  <h2 className="font-heading font-black text-xl text-[#FF7A00] uppercase tracking-tighter">Item Information</h2>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Tell us what you're selling</p>
                 </div>
               </div>
 
               <div className="space-y-6">
-                <div className="grid gap-2">
-                  <Label className="text-sm font-bold text-slate-700">Item Title</Label>
-                  <Input
-                    placeholder="e.g. Study desk with drawers - almost new"
-                    required
-                    className="h-12 rounded-2xl text-slate-900 border-slate-200 focus:ring-orange-500 focus:border-orange-500 transition-all"
-                  />
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Item Title</label>
+                  <div className="relative">
+                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                    <Input
+                      name="title"
+                      placeholder="e.g. Study desk with drawers - almost new"
+                      required
+                      className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200"
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="grid gap-2">
-                    <Label className="text-sm font-bold text-slate-700">Category</Label>
-                    <Select required>
-                      <SelectTrigger className="h-12 rounded-2xl border-slate-200">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl">
-                        <SelectItem value="furniture">Furniture</SelectItem>
-                        <SelectItem value="electronics">Electronics</SelectItem>
-                        <SelectItem value="books">Books</SelectItem>
-                        <SelectItem value="appliances">Appliances</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Category</label>
+                    <div className="relative">
+                      <ShoppingBag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 z-10" />
+                      <Select required value={category} onValueChange={(value) => setCategory(value as typeof category)}>
+                        <SelectTrigger className="pl-10 h-12 rounded-2xl bg-slate-50 border-transparent focus:bg-white focus:border-slate-200">
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                          <SelectItem value="furniture">Furniture</SelectItem>
+                          <SelectItem value="electronics">Electronics</SelectItem>
+                          <SelectItem value="books">Books</SelectItem>
+                          <SelectItem value="appliances">Appliances</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <div className="grid gap-2">
-                    <Label className="text-sm font-bold text-slate-700">Condition</Label>
-                    <Select required>
-                      <SelectTrigger className="h-12 rounded-2xl border-slate-200">
-                        <SelectValue placeholder="Condition" />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl">
-                        <SelectItem value="new">Brand New</SelectItem>
-                        <SelectItem value="like-new">Like New</SelectItem>
-                        <SelectItem value="used">Lightly Used</SelectItem>
-                        <SelectItem value="fair">Fair / Functional</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Condition</label>
+                    <div className="relative">
+                      <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 z-10" />
+                      <Select required value={condition} onValueChange={(value) => setCondition(value as typeof condition)}>
+                        <SelectTrigger className="pl-10 h-12 rounded-2xl bg-slate-50 border-transparent focus:bg-white focus:border-slate-200">
+                          <SelectValue placeholder="Condition" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                          <SelectItem value="new">Brand New</SelectItem>
+                          <SelectItem value="like-new">Like New</SelectItem>
+                          <SelectItem value="used">Used / Fair</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid gap-2">
-                  <Label className="text-sm font-bold text-slate-700">Selling Price (KSh)</Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <Input type="number" placeholder="2,500" required className="h-12 pl-11 rounded-2xl border-slate-200 focus:ring-orange-500" />
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Selling Price (KSh)</label>
+                  <div className="relative max-w-sm">
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                    <Input name="price" type="number" placeholder="2,500" required className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
                   </div>
                 </div>
               </div>
@@ -320,47 +329,57 @@ export default function PostItemPage() {
             </div>
 
             {/* Step 3: Details */}
-            <div className="p-8 lg:p-12 space-y-8">
-              <div className="flex items-center gap-4 mb-2">
+            <div className="p-8 lg:p-12 space-y-6">
+              <div className="flex items-center gap-4 mb-6">
                 <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-green-600">
                   <List className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="font-heading font-bold text-xl text-slate-900">Item Description</h2>
-                  <p className="text-sm text-slate-500">Be honest about model, age, and faults</p>
+                  <h2 className="font-heading font-black text-xl text-[#FF7A00] uppercase tracking-tighter">Item Description</h2>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Be honest about model, age, and faults</p>
                 </div>
               </div>
 
-              <div className="grid gap-2">
-                <Label className="text-sm font-bold text-slate-700">Detailed Description</Label>
-                <Textarea
-                  placeholder="Describe brand, model, any scratches, and reasons for selling. Let buyers know if price is negotiable."
-                  required
-                  className="min-h-[150px] rounded-2xl border-slate-200 p-4 focus:ring-orange-500"
-                />
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Detailed Description</label>
+                <div className="relative">
+                  <Info className="absolute left-3 top-3 w-4 h-4 text-slate-300" />
+                  <Textarea
+                    name="description"
+                    placeholder="Describe brand, model, any scratches, and reasons for selling. Let buyers know if price is negotiable."
+                    required
+                    className="pl-10 rounded-2xl min-h-[150px] bg-slate-50 border-transparent focus:bg-white focus:border-slate-200 pt-3"
+                  />
+                </div>
               </div>
             </div>
 
             {/* Step 4: Contact */}
-            <div className="p-8 lg:p-12 space-y-8 bg-slate-50/30">
-              <div className="flex items-center gap-4 mb-2">
+            <div className="p-8 lg:p-12 space-y-6 bg-slate-50/30">
+              <div className="flex items-center gap-4 mb-6">
                 <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600">
                   <Phone className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="font-heading font-bold text-xl text-slate-900">Communication</h2>
-                  <p className="text-sm text-slate-500">Where should buyers contact you?</p>
+                  <h2 className="font-heading font-black text-xl text-[#FF7A00] uppercase tracking-tighter">Communication</h2>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Where should buyers contact you?</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="grid gap-2">
-                  <Label className="text-sm font-bold text-slate-700">Phone Number</Label>
-                  <Input placeholder="+254 700 000 000" required className="h-12 rounded-xl border-slate-200" />
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Phone Number</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                    <Input name="phone" placeholder="+254 700 000 000" required className="pl-10 rounded-2xl h-12 bg-white border-transparent focus:bg-white focus:border-slate-200" />
+                  </div>
                 </div>
-                <div className="grid gap-2">
-                  <Label className="text-sm font-bold text-slate-700">WhatsApp Number</Label>
-                  <Input placeholder="+254 700 000 000" required className="h-12 rounded-xl border-slate-200" />
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">WhatsApp Number</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                    <Input name="whatsapp" placeholder="+254 700 000 000" required className="pl-10 rounded-2xl h-12 bg-white border-transparent focus:bg-white focus:border-slate-200" />
+                  </div>
                 </div>
               </div>
             </div>

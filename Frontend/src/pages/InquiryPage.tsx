@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { apiService } from '@/services/apiService';
+import { useAuth } from '@/contexts/AuthContext';
 
 import { BackButton } from '../components/ui/BackButton';
 
@@ -14,22 +16,44 @@ const InquiryPage = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const { toast } = useToast();
+    const { user } = useAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'houses');
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsSubmitting(true);
+        const form = new FormData(e.currentTarget);
 
-        // Simulate API call
-        setTimeout(() => {
+        const response = await apiService.requests.createRequest({
+            requester_id: user?.id || null,
+            request_type: activeTab === 'houses' ? 'house' : 'item',
+            email: String(form.get('email') || ''),
+            phone: String(form.get('phone') || ''),
+            preferred_location: String(form.get('preferredLocation') || ''),
+            house_type: String(form.get('houseType') || ''),
+            item_category: String(form.get('itemCategory') || ''),
+            condition_basis: String(form.get('conditionBasis') || ''),
+            budget_range: String(form.get('budgetRange') || ''),
+            message: String(form.get('message') || ''),
+        });
+
+        if (response.success) {
             setIsSubmitting(false);
             toast({
                 title: "Request Sent!",
                 description: `We've received your ${activeTab === 'houses' ? 'house' : 'item'} request and will notify you when a match is found.`,
             });
             navigate('/');
-        }, 1500);
+            return;
+        }
+
+        setIsSubmitting(false);
+        toast({
+            title: "Request Failed",
+            description: response.error || "Please try again shortly.",
+            variant: "destructive",
+        });
     };
 
     return (
@@ -72,14 +96,14 @@ const InquiryPage = () => {
                                         <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Email Address</label>
                                         <div className="relative">
                                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                                            <Input required type="email" placeholder="eg. your@email.com" className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
+                                            <Input name="email" required type="email" placeholder="eg. your@email.com" className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Contact Number</label>
                                         <div className="relative">
                                             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                                            <Input required type="tel" placeholder="eg. 0712 345 678" className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
+                                            <Input name="phone" required type="tel" placeholder="eg. 0712 345 678" className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
                                         </div>
                                     </div>
                                 </div>
@@ -89,14 +113,14 @@ const InquiryPage = () => {
                                         <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Preferred Location</label>
                                         <div className="relative">
                                             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                                            <Input required placeholder="eg. Kangaru, Mutunduri" className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
+                                            <Input name="preferredLocation" required placeholder="eg. Kangaru, Mutunduri" className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">House Type</label>
                                         <div className="relative">
                                             <Home className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                                            <Input required placeholder="eg. Bedsitter, 1 Bedroom" className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
+                                            <Input name="houseType" required placeholder="eg. Bedsitter, 1 Bedroom" className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
                                         </div>
                                     </div>
                                 </div>
@@ -105,7 +129,7 @@ const InquiryPage = () => {
                                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Price Range (Ksh)</label>
                                     <div className="relative">
                                         <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                                        <Input required placeholder="eg. 5,000 - 8,000" className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
+                                        <Input name="budgetRange" required placeholder="eg. 5,000 - 8,000" className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
                                     </div>
                                 </div>
 
@@ -114,6 +138,7 @@ const InquiryPage = () => {
                                     <div className="relative">
                                         <MessageSquare className="absolute left-3 top-3 w-4 h-4 text-slate-300" />
                                         <Textarea
+                                            name="message"
                                             placeholder="eg. Need a room with constant water supply, secure gate, and near the stage..."
                                             className="pl-10 rounded-2xl min-h-[120px] bg-slate-50 border-transparent focus:bg-white focus:border-slate-200 pt-3"
                                         />
@@ -133,14 +158,14 @@ const InquiryPage = () => {
                                         <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Email Address</label>
                                         <div className="relative">
                                             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                                            <Input required type="email" placeholder="eg. your@email.com" className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
+                                            <Input name="email" required type="email" placeholder="eg. your@email.com" className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Contact Number</label>
                                         <div className="relative">
                                             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                                            <Input required type="tel" placeholder="eg. 0712 345 678" className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
+                                            <Input name="phone" required type="tel" placeholder="eg. 0712 345 678" className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
                                         </div>
                                     </div>
                                 </div>
@@ -150,14 +175,14 @@ const InquiryPage = () => {
                                         <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Item Category</label>
                                         <div className="relative">
                                             <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                                            <Input required placeholder="eg. Electronics, Furniture" className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
+                                            <Input name="itemCategory" required placeholder="eg. Electronics, Furniture" className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Condition Basis</label>
                                         <div className="relative">
                                             <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                                            <Input required placeholder="eg. New, Slightly Used" className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
+                                            <Input name="conditionBasis" required placeholder="eg. New, Slightly Used" className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
                                         </div>
                                     </div>
                                 </div>
@@ -166,7 +191,7 @@ const InquiryPage = () => {
                                     <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">Budget Range (Ksh)</label>
                                     <div className="relative">
                                         <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
-                                        <Input required placeholder="eg. 2,000 - 4,000" className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
+                                        <Input name="budgetRange" required placeholder="eg. 2,000 - 4,000" className="pl-10 rounded-2xl h-12 bg-slate-50 border-transparent focus:bg-white focus:border-slate-200" />
                                     </div>
                                 </div>
 
@@ -175,6 +200,7 @@ const InquiryPage = () => {
                                     <div className="relative">
                                         <MessageSquare className="absolute left-3 top-3 w-4 h-4 text-slate-300" />
                                         <Textarea
+                                            name="message"
                                             placeholder="eg. Looking for a study table with a drawer and a chair. Preferably around Main Gate..."
                                             className="pl-10 rounded-2xl min-h-[120px] bg-slate-50 border-transparent focus:bg-white focus:border-slate-200 pt-3"
                                         />

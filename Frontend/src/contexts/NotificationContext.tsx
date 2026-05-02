@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { Notification } from '@/types';
-import { api } from '@/services/api';
+import { apiService } from '@/services/apiService';
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -57,8 +57,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const fetchNotifications = useCallback(async (userId: string) => {
     setLoading(true);
     try {
-      // For mock purposes, we merge API data with local storage
-      const data = await api.getNotifications(userId);
+      const response = await apiService.notifications.getNotifications(userId);
+      const data = response.success ? response.notifications : [];
       setNotifications(prev => {
         const ids = new Set(prev.map(n => n.id));
         const filtered = data.filter(n => !ids.has(n.id));
@@ -80,6 +80,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       muted: false,
     };
     setNotifications(prev => [newNotif, ...prev]);
+    apiService.notifications.createNotification(notif).catch(error => {
+      console.error('Failed to persist notification:', error);
+    });
   }, []);
 
   const markAsRead = useCallback(async (notificationId: string) => {

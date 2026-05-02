@@ -10,6 +10,8 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { apiService } from '@/services/apiService';
 import type { MarketplaceItem } from '@/types';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 const categories = ['all', 'furniture', 'electronics', 'books', 'appliances', 'other'];
 
@@ -25,6 +27,7 @@ export default function MarketplacePage() {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [placeholderText, setPlaceholderText] = useState('Search items...');
   const { favoriteItems, toggleFavoriteItem } = useFavorites();
+  const { user } = useAuth();
 
   useEffect(() => {
     const phrases = [
@@ -55,13 +58,13 @@ export default function MarketplacePage() {
     apiService.marketplace.getItems({
       category: category !== 'all' ? category : undefined,
       condition: condition !== 'all' ? condition : undefined,
-      search: search || undefined,
+      search: search || undefined
     }).then(response => {
       if (response.success) {
         setItems(response.items);
       }
     });
-  }, [search, category, condition]);
+  }, [search, category, condition, user]);
 
   return (
     <div className="px-4 py-4 space-y-4 bg-[#F7F9FC] min-h-[calc(100vh-4rem)] max-w-[1200px] mx-auto w-full">
@@ -157,6 +160,21 @@ export default function MarketplacePage() {
         <div className="text-center py-12 text-muted-foreground">
           <p className="font-heading font-semibold">No items found</p>
           <p className="text-sm mt-1">Try adjusting your filters</p>
+        </div>
+      )}
+
+      {!user && (
+        <div className="bg-[#FF7A00] rounded-[32px] p-8 text-center text-white space-y-4 shadow-xl shadow-orange-900/20 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full -mr-16 -mt-16 blur-2xl" />
+          <h3 className="text-xl font-heading font-bold">Ready to buy or sell?</h3>
+          <p className="text-sm text-white/90 max-w-xs mx-auto">
+            Create an account to contact sellers, save favorites, and list your own items.
+          </p>
+          <Link to="/account" className="block">
+            <Button className="bg-[#0F3D91] hover:bg-[#0F3D91]/90 text-white font-bold rounded-xl px-10 h-12 shadow-lg">
+              Sign In Now
+            </Button>
+          </Link>
         </div>
       )}
 

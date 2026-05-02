@@ -1,43 +1,85 @@
-// =====================================================================
-// MOCK MODE: All Supabase functionality is stubbed out.
-// No real network calls are made. Switch to realApi when ready.
-// =====================================================================
+import { createClient } from '@supabase/supabase-js';
 
-export const supabase = null as any; // Not used in mock mode
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
-// Mock auth helpers — all return success shapes that AuthContext expects
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
-export const signUp = async (_email: string, _password: string, _name: string) => {
-  return { data: { user: null, session: null }, error: null };
+export const supabase = isSupabaseConfigured
+  ? createClient(supabaseUrl!, supabaseAnonKey!, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    })
+  : null;
+
+const notConfiguredError = {
+  message: 'Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env.',
 };
 
-export const signIn = async (_email: string, _password: string) => {
-  return { data: { user: null, session: null }, error: null };
+export const signUp = async (email: string, password: string, name: string, userType = 'resident') => {
+  if (!supabase) return { data: { user: null, session: null }, error: notConfiguredError };
+
+  return supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name: name,
+        user_type: userType,
+      },
+    },
+  });
+};
+
+export const signIn = async (email: string, password: string) => {
+  if (!supabase) return { data: { user: null, session: null }, error: notConfiguredError };
+  return supabase.auth.signInWithPassword({ email, password });
 };
 
 export const signInWithGoogle = async () => {
-  return { data: {}, error: { message: 'Google sign-in not available in mock mode.' } };
+  if (!supabase) return { data: {}, error: notConfiguredError };
+
+  return supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${window.location.origin}/account`,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
+    },
+  });
 };
 
 export const signOut = async () => {
-  return { error: null };
+  if (!supabase) return { error: null };
+  return supabase.auth.signOut();
 };
 
-export const resetPassword = async (_email: string) => {
-  return { data: {}, error: null };
+export const resetPassword = async (email: string) => {
+  if (!supabase) return { data: {}, error: notConfiguredError };
+  return supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/forgot-password`,
+  });
 };
 
-export const updatePassword = async (_newPassword: string) => {
-  return { data: {}, error: null };
+export const updatePassword = async (newPassword: string) => {
+  if (!supabase) return { data: {}, error: notConfiguredError };
+  return supabase.auth.updateUser({ password: newPassword });
 };
 
 export const getCurrentUser = async () => {
-  return { user: null, error: null };
+  if (!supabase) return { user: null, error: null };
+  const { data, error } = await supabase.auth.getUser();
+  return { user: data.user, error };
 };
 
-export const onAuthStateChange = (_callback: (event: string, session: any) => void) => {
-  // Return a subscription object that does nothing
-  return { data: { subscription: { unsubscribe: () => {} } } };
+export const onAuthStateChange = (callback: (event: string, session: any) => void) => {
+  if (!supabase) return { data: { subscription: { unsubscribe: () => {} } } };
+  return supabase.auth.onAuthStateChange(callback);
 };
 
 export default supabase;

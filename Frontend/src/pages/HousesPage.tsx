@@ -9,6 +9,7 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { apiService } from '@/services/apiService';
 import type { House } from '@/types';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function HousesPage() {
   const [searchParams] = useSearchParams();
@@ -21,6 +22,7 @@ export default function HousesPage() {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [placeholderText, setPlaceholderText] = useState('Search houses...');
   const { favoriteHouses, toggleFavoriteHouse } = useFavorites();
+  const { user } = useAuth();
 
   useEffect(() => {
     const phrases = [
@@ -48,7 +50,10 @@ export default function HousesPage() {
   }, [placeholderIndex]);
 
   useEffect(() => {
-    apiService.houses.getHouses({ type: type !== 'all' ? type : undefined, location: search || undefined }).then(response => {
+    apiService.houses.getHouses({ 
+      type: type !== 'all' ? type : undefined, 
+      location: search || undefined
+    }).then(response => {
       if (response.success) {
         const sorted = [...response.listings];
         if (sort === 'price-low') sorted.sort((a, b) => a.price - b.price);
@@ -58,7 +63,7 @@ export default function HousesPage() {
         setHouses(sorted);
       }
     });
-  }, [search, type, sort]);
+  }, [search, type, sort, user]);
 
   return (
     <div className="px-4 py-4 space-y-4 bg-[#F7F9FC] min-h-[calc(100vh-4rem)] max-w-[1200px] mx-auto w-full">
@@ -157,6 +162,21 @@ export default function HousesPage() {
         <div className="text-center py-12 text-muted-foreground">
           <p className="font-heading font-semibold">No houses found</p>
           <p className="text-sm mt-1">Try adjusting your filters</p>
+        </div>
+      )}
+
+      {!user && (
+        <div className="bg-[#0F3D91] rounded-[32px] p-8 text-center text-white space-y-4 shadow-xl shadow-blue-900/20 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF7A00]/20 rounded-full -mr-16 -mt-16 blur-2xl" />
+          <h3 className="text-xl font-heading font-bold">Like what you see?</h3>
+          <p className="text-sm text-blue-100 max-w-xs mx-auto">
+            Create an account to save favorites, contact landlords directly, and get notified of new listings.
+          </p>
+          <Link to="/account" className="block">
+            <Button className="bg-[#FF7A00] hover:bg-[#FF7A00]/90 text-white font-bold rounded-xl px-10 h-12">
+              Sign In Now
+            </Button>
+          </Link>
         </div>
       )}
 

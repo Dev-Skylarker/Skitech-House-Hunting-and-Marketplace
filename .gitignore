@@ -29,6 +29,10 @@ tmpclaude-*
 
 # Environment variables
 .env
+.env.*
+Frontend/.env
+Frontend/.env.*
+!Frontend/.env.example
 .env.local
 .env.development.local
 .env.test.local

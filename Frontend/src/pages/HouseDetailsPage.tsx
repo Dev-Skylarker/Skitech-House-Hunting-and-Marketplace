@@ -12,7 +12,6 @@ import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiService } from '@/services/apiService';
 import { emailjsService } from '@/services/emailjsService';
-import { mockHouses, mockUsers } from '@/services/api';
 import type { House, HouseRating } from '@/types';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
@@ -27,6 +26,7 @@ export default function HouseDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [house, setHouse] = useState<House | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
   const [ratings, setRatings] = useState<HouseRating[]>([]);
   const [showRatingModal, setShowRatingModal] = useState(false);
@@ -51,13 +51,8 @@ export default function HouseDetailsPage() {
         if (response.success) {
           setHouse(response.listing);
         }
+        setIsLoaded(true);
       });
-      // TODO: Implement ratings API
-      // apiService.houses.getRatings(id).then(response => {
-      //   if (response.success) {
-      //     setRatings(response.ratings);
-      //   }
-      // });
     }
   }, [id]);
 
@@ -127,10 +122,17 @@ export default function HouseDetailsPage() {
     }
   };
 
-  if (!house) return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading...</div>;
+  if (!isLoaded) return <div className="flex items-center justify-center h-64 text-muted-foreground">Loading...</div>;
+  if (!house) return (
+    <div className="flex flex-col items-center justify-center h-64 gap-3 text-muted-foreground">
+      <p className="font-medium">House not found.</p>
+      <button onClick={() => navigate('/houses')} className="text-sm text-primary underline">Browse all houses</button>
+    </div>
+  );
 
-  const similar = mockHouses.filter(h => h.id !== house.id && h.houseType === house.houseType).slice(0, 3);
-  const landlord = house.landlordId ? mockUsers.find(u => u.id === house.landlordId) : null;
+  // TODO: Fetch similar houses from API
+  const similar: House[] = [];
+  const landlord = house ? { ...house, name: house.landlordName } : null;
 
   return (
     <div className="pb-4">
@@ -391,8 +393,13 @@ export default function HouseDetailsPage() {
               </div>
 
               {/* Report Link */}
-              <button className="w-full py-2 text-xs text-destructive hover:bg-destructive/5 rounded-lg transition-colors flex items-center justify-center gap-1">
-                <Flag className="w-3 h-3" /> Report landlord
+              <button
+                onClick={() => navigate(
+                  `/help?tab=safety&report=1&listing=${encodeURIComponent(house.title)}&landlord=${encodeURIComponent(house.landlordName)}`
+                )}
+                className="w-full py-2 text-xs text-destructive hover:bg-destructive/5 rounded-lg transition-colors flex items-center justify-center gap-1"
+              >
+                <Flag className="w-3 h-3" /> Report landlord / listing
               </button>
             </CardContent>
           </Card>

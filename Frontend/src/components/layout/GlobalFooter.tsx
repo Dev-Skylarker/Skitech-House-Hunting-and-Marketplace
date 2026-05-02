@@ -191,14 +191,14 @@ export function GlobalFooter() {
                         </p>
                         <div className="flex items-center gap-4">
                             <Link 
-                                to="/terms" 
+                                to="/help?tab=legal&open=terms" 
                                 className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
                             >
                                 Terms of Service
                             </Link>
                             <div className="w-1 h-1 rounded-full bg-slate-300" />
                             <Link 
-                                to="/privacy" 
+                                to="/help?tab=legal&open=privacy" 
                                 className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
                             >
                                 Privacy Policy

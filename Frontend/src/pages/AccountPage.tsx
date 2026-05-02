@@ -11,7 +11,7 @@ import {
   ShieldCheck, FileText, Info, Globe, Headphones, Shield, CheckCircle2, BarChart3,
   User, Edit, Trash2, Building2, ShoppingBag, Bell, Heart, LogOut, Settings, AlertCircle, PlayCircle, Menu, CheckSquare, ArrowRight
 } from 'lucide-react';
-import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { toast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
@@ -37,6 +37,17 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { AccountProfileSettings } from '@/components/account/AccountProfileSettings';
 
 const BADGE_INFO: Record<string, { icon: any; color: string; description: string }> = {
   superhost: {
@@ -72,7 +83,7 @@ function GuestView() {
   const [regConfirmPassword, setRegConfirmPassword] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
-  const [selectedRole, setSelectedRole] = useState<UserType>('tenant');
+  const [selectedRole, setSelectedRole] = useState<UserType>('resident');
   const [agreesToTerms, setAgreesToTerms] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
@@ -109,11 +120,24 @@ function GuestView() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = await login(loginEmail, loginPassword);
-    if (success) {
+    const { success, user } = await login(loginEmail, loginPassword);
+    if (success && user) {
       toast({ title: 'Welcome back!', description: 'You have logged in successfully.' });
-      const from = (location.state as any)?.from?.pathname || '/account';
-      navigate(from, { replace: true });
+      
+      const from = (location.state as any)?.from?.pathname;
+      if (from) {
+        navigate(from, { replace: true });
+        return;
+      }
+      
+      // Role-based routing
+      if (user.role === 'admin') {
+        navigate('/admin', { replace: true });
+      } else if (user.userType === 'landlord' || user.role === 'landlord') {
+        navigate('/landlord-settings', { replace: true });
+      } else {
+        navigate('/account?tab=overview', { replace: true });
+      }
     }
   };
 
@@ -134,10 +158,7 @@ function GuestView() {
     const success = await register(regName, regEmail, regPassword, selectedRole);
     if (success) {
       setRegistrationSuccess(true);
-      toast({
-        title: 'Account created!',
-        description: `Welcome to Skitech as a ${selectedRole}. Please sign in to continue.`
-      });
+      // Detailed success toast is now handled directly by the register function in AuthContext
     }
   };
 
@@ -274,13 +295,13 @@ function GuestView() {
                     <div className="grid grid-cols-2 gap-3">
                       <button
                         type="button"
-                        onClick={() => setSelectedRole('tenant')}
-                        className={`p-3 rounded-lg border-2 transition-all ${selectedRole === 'tenant'
+                        onClick={() => setSelectedRole('resident')}
+                        className={`p-3 rounded-lg border-2 transition-all ${selectedRole === 'resident'
                           ? 'border-[#0F3D91] bg-[#0F3D91]/5'
                           : 'border-border bg-card'
                           }`}
                       >
-                        <div className="font-semibold text-sm">Tenant</div>
+                        <div className="font-semibold text-sm">Resident</div>
                         <div className="text-[11px] text-muted-foreground">Looking for housing</div>
                       </button>
                       <button
@@ -406,11 +427,11 @@ function GuestView() {
 
                       <p className="text-[11px] text-center text-muted-foreground">
                         By continuing, you agree to our{' '}
-                        <Link to="/terms" className="text-[#0F3D91] font-medium hover:underline">
+                        <Link to="/help?tab=legal&open=terms" className="text-[#0F3D91] font-medium hover:underline">
                           Terms of Service
                         </Link>{' '}
                         and{' '}
-                        <Link to="/privacy" className="text-[#0F3D91] font-medium hover:underline">
+                        <Link to="/help?tab=legal&open=privacy" className="text-[#0F3D91] font-medium hover:underline">
                           Privacy Policy
                         </Link>
                       </p>
@@ -426,11 +447,11 @@ function GuestView() {
                         />
                         <label htmlFor="terms-agree" className="text-[11px] text-blue-900 cursor-pointer">
                           I agree to the{' '}
-                          <Link to="/terms" className="font-semibold underline hover:text-blue-700">
+                          <Link to="/help?tab=legal&open=terms" className="font-semibold underline hover:text-blue-700">
                             Terms of Service
                           </Link>{' '}
                           and{' '}
-                          <Link to="/privacy" className="font-semibold underline hover:text-blue-700">
+                          <Link to="/help?tab=legal&open=privacy" className="font-semibold underline hover:text-blue-700">
                             Privacy Policy
                           </Link>
                         </label>
@@ -470,11 +491,16 @@ function GuestView() {
                     <button
                       type="button"
                       onClick={async () => {
-                        // Store the selected role in localStorage for Google sign-up
-                        localStorage.setItem('google_signup_role', selectedRole);
-                        const success = await loginWithGoogle();
-                        if (success) {
-                          // Google sign-up successful, auth state change listener will handle the rest
+                        if (!agreesToTerms) {
+                          toast({ title: 'Please agree to terms', description: 'You must accept our Terms and Privacy Policy to continue.' });
+                          return;
+                        }
+                        if (window.confirm(`You are signing up as a ${selectedRole}. Do you want to continue?`)) {
+                          localStorage.setItem('google_signup_role', selectedRole);
+                          const success = await loginWithGoogle();
+                          if (success) {
+                            // Google sign-up successful, auth state change listener will handle the rest
+                          }
                         }
                       }}
                       className="w-full h-11 rounded-lg border border-border bg-card hover:bg-muted transition-colors flex items-center justify-center gap-2 text-sm font-semibold"
@@ -500,10 +526,17 @@ function GuestView() {
 
 // ============= LANDLORD PROFILE =============
 function LandlordProfile({ user }: { user: any }) {
+  const { updateProfile } = useAuth();
   const [editingBio, setEditingBio] = useState(false);
   const [bio, setBio] = useState(user?.bio || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [saving, setSaving] = useState(false);
+  const [confirmSaveOpen, setConfirmSaveOpen] = useState(false);
+
+  useEffect(() => {
+    setBio(user?.bio || '');
+    setPhone(user?.phone || '');
+  }, [user?.bio, user?.phone]);
 
   const BADGE_INFO: Record<string, { icon: any; color: string; description: string }> = {
     superhost: { icon: Award, color: 'text-yellow-600', description: 'Consistently high ratings and quick responses' },
@@ -512,10 +545,15 @@ function LandlordProfile({ user }: { user: any }) {
     communicative: { icon: CheckCircle2, color: 'text-cyan-600', description: 'Excellent communication skills' },
   };
 
-  const handleSaveBio = async () => {
+  const applyLandlordSave = async () => {
     setSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    const { error } = await updateProfile({ bio, phone });
     setSaving(false);
+    setConfirmSaveOpen(false);
+    if (error) {
+      toast({ title: 'Could not save', description: error, variant: 'destructive' });
+      return;
+    }
     setEditingBio(false);
     toast({ title: 'Profile updated', description: 'Your business profile has been saved.' });
   };
@@ -538,7 +576,7 @@ function LandlordProfile({ user }: { user: any }) {
           <CardContent className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-3xl font-heading font-bold text-[#0F3D91]">{user?.reputationScore || 92}</p>
+                <p className="text-3xl font-heading font-bold text-[#0F3D91]">{user?.reputationScore ?? 0}</p>
                 <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Score</p>
               </div>
               <div className="text-right">
@@ -547,7 +585,7 @@ function LandlordProfile({ user }: { user: any }) {
                   <span className="text-sm text-muted-foreground">/5</span>
                 </div>
                 <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Average Rating</p>
-                <p className="text-[11px] text-[#0F3D91] font-bold mt-1">12 reviews from tenants</p>
+                <p className="text-[11px] text-[#0F3D91] font-bold mt-1">{user?.totalRatings ?? 0} reviews from residents</p>
               </div>
             </div>
             <div className="flex justify-between items-center bg-slate-50 p-4 rounded-xl">
@@ -615,14 +653,19 @@ function LandlordProfile({ user }: { user: any }) {
                 <Label>Business Phone (Public)</Label>
                 <Input value={phone} onChange={e => setPhone(e.target.value)} className="rounded-xl h-11" placeholder="+2547..." />
               </div>
-              <Button onClick={handleSaveBio} disabled={saving} className="bg-[#0F3D91] rounded-xl h-11 px-8 font-heading font-bold">
+              <Button
+                type="button"
+                onClick={() => setConfirmSaveOpen(true)}
+                disabled={saving}
+                className="bg-[#0F3D91] rounded-xl h-11 px-8 font-heading font-bold"
+              >
                 {saving ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
           ) : (
             <div className="space-y-4">
               <p className="text-slate-600 leading-relaxed italic">
-                "{bio || 'No bio provided. Adding a bio helps tenants trust you more.'}"
+                "{bio || 'No bio provided. Adding a bio helps residents trust you more.'}"
               </p>
               <div className="flex items-center gap-2 text-sm text-slate-500">
                 <Phone className="w-4 h-4" />
@@ -667,6 +710,29 @@ function LandlordProfile({ user }: { user: any }) {
           </CardContent>
         </Card>
       )}
+
+      <AlertDialog open={confirmSaveOpen} onOpenChange={setConfirmSaveOpen}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Save business profile?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your public bio and business phone will be updated for renters and buyers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="rounded-xl bg-[#0F3D91] hover:bg-[#FF7A00]"
+              onClick={e => {
+                e.preventDefault();
+                void applyLandlordSave();
+              }}
+            >
+              Confirm &amp; save
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -674,6 +740,8 @@ function LandlordProfile({ user }: { user: any }) {
 // ============= SUPPORT TAB =============
 function SupportTab() {
   const navigate = useNavigate();
+  const supportHref = import.meta.env.VITE_SUPPORT_WHATSAPP_URL as string | undefined;
+  const waLink = supportHref || 'https://wa.me/254700000000?text=Hi%20Skitech%20support';
   return (
     <div className="space-y-8 max-w-3xl">
       <div>
@@ -683,10 +751,10 @@ function SupportTab() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {[
-          { icon: MessageSquare, title: 'WhatsApp Support', desc: 'Chat with us directly', action: 'Open WhatsApp', color: 'bg-green-500' },
-          { icon: Phone, title: 'Call Center', desc: 'Daily 8AM - 8PM', action: 'Call +254 700...', color: 'bg-blue-600' },
-          { icon: Mail, title: 'Email Us', desc: 'support@skitech.co.ke', action: 'Send Email', color: 'bg-indigo-600' },
-          { icon: HelpCircle, title: 'Help Center', desc: 'Guides & Resources', action: 'Visit Help Hub', color: 'bg-purple-600', link: '/help' },
+          { icon: MessageSquare, title: 'WhatsApp Support', desc: 'Chat with us directly', action: 'Open WhatsApp', color: 'bg-green-500', external: waLink },
+          { icon: Phone, title: 'Call Center', desc: 'Daily 8AM - 8PM', action: 'Call us', color: 'bg-blue-600', tel: '+254700000000' },
+          { icon: Mail, title: 'Email Us', desc: 'support@skitech.co.ke', action: 'Send Email', color: 'bg-indigo-600', mailto: 'mailto:support@skitech.co.ke' },
+          { icon: HelpCircle, title: 'Help Center', desc: 'Guides & safety', action: 'Visit Help Hub', color: 'bg-purple-600', link: '/help' },
         ].map((item, i) => (
           <Card key={i} className="border-none shadow-sm rounded-2xl overflow-hidden">
             <CardContent className="p-6">
@@ -698,7 +766,12 @@ function SupportTab() {
               <Button
                 variant="outline"
                 className="w-full rounded-xl font-heading font-bold h-10 border-[#0F3D91] text-[#0F3D91] hover:bg-[#0F3D91]/5"
-                onClick={() => item.link ? navigate(item.link) : null}
+                onClick={() => {
+                  if ('link' in item && item.link) navigate(item.link);
+                  else if ('external' in item && item.external) window.open(item.external, '_blank', 'noopener,noreferrer');
+                  else if ('tel' in item && item.tel) window.location.href = `tel:${item.tel}`;
+                  else if ('mailto' in item && item.mailto) window.location.href = item.mailto;
+                }}
               >
                 {item.action}
               </Button>
@@ -715,7 +788,13 @@ function SupportTab() {
           <div className="relative z-10 max-w-[400px]">
             <h3 className="font-heading font-bold text-xl mb-3">Community Safety</h3>
             <p className="text-white/80 text-sm leading-relaxed mb-6">Found a suspicious listing or user? Reporting helps us keep the Embu community safe for everyone.</p>
-            <Button className="bg-white text-[#0F3D91] hover:bg-white/90 rounded-xl font-heading font-bold h-11 px-8">Report an Issue</Button>
+            <Button
+              type="button"
+              className="bg-white text-[#0F3D91] hover:bg-white/90 rounded-xl font-heading font-bold h-11 px-8"
+              onClick={() => navigate('/help')}
+            >
+              Report an Issue
+            </Button>
           </div>
         </div>
       </Card>
@@ -1137,10 +1216,10 @@ function ListingManagement({ user }: { user: any }) {
 // ============= DASHBOARD OVERVIEW =============
 function DashboardOverview({ user }: { user: any }) {
   const stats = [
-    { label: 'Views', value: '1,284', icon: Eye, color: 'text-[#0F3D91]', bg: 'bg-blue-50' },
-    { label: 'Inquiries', value: '28', icon: Bell, color: 'text-[#FF7A00]', bg: 'bg-orange-50' },
-    { label: 'Favorites', value: '45', icon: Heart, color: 'text-red-600', bg: 'bg-red-50' },
-    { label: 'Reputation', value: user.reputationScore || '92', icon: BarChart3, color: 'text-green-600', bg: 'bg-green-50' },
+    { label: 'Views', value: '0', icon: Eye, color: 'text-[#0F3D91]', bg: 'bg-blue-50' },
+    { label: 'Inquiries', value: '0', icon: Bell, color: 'text-[#FF7A00]', bg: 'bg-orange-50' },
+    { label: 'Favorites', value: '0', icon: Heart, color: 'text-red-600', bg: 'bg-red-50' },
+    { label: 'Reputation', value: user.reputationScore ?? 0, icon: BarChart3, color: 'text-green-600', bg: 'bg-green-50' },
   ];
 
   return (
@@ -1161,6 +1240,35 @@ function DashboardOverview({ user }: { user: any }) {
         ))}
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Link to="/profile" className="block group">
+          <Card className="border-none shadow-[0_4px_20px_rgba(0,0,0,0.03)] rounded-2xl h-full transition-all group-hover:shadow-md group-hover:ring-1 group-hover:ring-[#0F3D91]/15">
+            <CardContent className="p-5 flex items-center justify-between gap-4">
+              <div>
+                <p className="font-heading font-bold text-slate-900">Public profile</p>
+                <p className="text-xs text-muted-foreground mt-1">Summary others see when you message or list</p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-[#0F3D91]/10 flex items-center justify-center shrink-0">
+                <User className="w-6 h-6 text-[#0F3D91]" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link to="/account?tab=settings" className="block group">
+          <Card className="border-none shadow-[0_4px_20px_rgba(0,0,0,0.03)] rounded-2xl h-full transition-all group-hover:shadow-md group-hover:ring-1 group-hover:ring-[#FF7A00]/20">
+            <CardContent className="p-5 flex items-center justify-between gap-4">
+              <div>
+                <p className="font-heading font-bold text-slate-900">Profile &amp; settings</p>
+                <p className="text-xs text-muted-foreground mt-1">Name, phone, bio, and account shortcuts</p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-[#FF7A00]/10 flex items-center justify-center shrink-0">
+                <Settings className="w-6 h-6 text-[#FF7A00]" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 border-none shadow-[0_4px_20px_rgba(0,0,0,0.03)] rounded-2xl">
           <CardHeader>
@@ -1169,7 +1277,7 @@ function DashboardOverview({ user }: { user: any }) {
           </CardHeader>
           <CardContent>
             <div className="h-[200px] flex items-end justify-between gap-2 px-2">
-              {[65, 45, 75, 55, 90, 80, 95].map((h, i) => (
+              {[0, 0, 0, 0, 0, 0, 0].map((h, i) => (
                 <div key={i} className="flex-1 flex flex-col items-center gap-2">
                   <div
                     className="w-full bg-[#0F3D91] rounded-t-lg transition-all hover:bg-[#FF7A00]"
@@ -1210,12 +1318,14 @@ function DashboardOverview({ user }: { user: any }) {
     </div>
   );
 }
-
 // ============= MAIN DASHBOARD =============
 function Dashboard({ user, logout }: { user: any; logout: () => void }) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { addNotification } = useNotifications();
   const activeTab = searchParams.get('tab') || 'overview';
+  const isMobile = window.innerWidth < 768;
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     // Welcome Trigger
@@ -1243,202 +1353,184 @@ function Dashboard({ user, logout }: { user: any; logout: () => void }) {
       navigate('/admin');
       return;
     }
-    if (tab === 'profile') {
-      navigate('/profile');
-      return;
-    }
     newParams.set('tab', tab);
     // When changing main tab, clear subtab unless we stay on listings
     if (tab !== 'listings') newParams.delete('subtab');
     setSearchParams(newParams);
   };
 
-  const navigate = useNavigate();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
   const getInitial = (name: string) => name.charAt(0).toUpperCase();
 
   const navItems = [
     { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'listings', label: 'My Listings', icon: ShoppingBag, roles: ['landlord', 'user'] },
-    { id: 'profile', label: 'My Profile', icon: User },
     { id: 'landlord-profile', label: 'Business Profile', icon: Award, roles: ['landlord'] },
-    { id: 'history', label: 'History', icon: History },
+    { id: 'history', label: 'Activity', icon: History },
     { id: 'admin', label: 'Admin Panel', icon: Shield, roles: ['admin'] },
     { id: 'support', label: 'Contact & Support', icon: Headphones },
     { id: 'guide', label: 'System Guide', icon: PlayCircle },
-    { id: 'settings', label: 'Account Settings', icon: Settings },
+    { id: 'settings', label: 'Profile & settings', icon: Settings },
   ].filter(tab => !tab.roles || tab.roles.includes(user.userType) || user.role === 'admin');
 
-  return (
-    <div className="min-h-screen bg-[#F7F9FC] pb-24">
-      {/* Premium Dashboard Header */}
-      <div className="bg-[#0F3D91] text-white pt-10 pb-20 px-6 md:pt-12 md:pb-24 rounded-b-[40px] shadow-2xl relative overflow-hidden mb-[-60px] md:mb-[-80px] z-0">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl" />
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-          <div className="flex items-center gap-4 md:gap-5">
-            {/* Mobile Menu Trigger */}
-            <div className="md:hidden">
-              <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20">
-                    <Menu className="w-5 h-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-72 p-0 border-none bg-white">
-                  <SheetHeader className="p-6 text-left border-b border-slate-100">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0F3D91] to-[#0A2560] flex items-center justify-center text-white font-bold shadow-lg shadow-blue-900/20">S</div>
-                      <SheetTitle className="font-heading font-black tracking-tight text-[#0F3D91]">SKITECH</SheetTitle>
-                    </div>
-                  </SheetHeader>
-                  <div className="px-4 py-6 flex flex-col gap-2">
-                    {navItems.map(tab => (
-                      <button
-                        key={tab.id}
-                        onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false); }}
-                        className={cn(
-                          "flex items-center gap-3 px-4 py-3.5 rounded-2xl font-heading font-bold text-sm transition-all text-left",
-                          activeTab === tab.id
-                            ? "bg-slate-50 text-[#0F3D91] ring-1 ring-slate-100 shadow-sm"
-                            : "text-muted-foreground hover:bg-slate-50/50"
-                        )}
-                      >
-                        <tab.icon className={cn("w-5 h-5", activeTab === tab.id ? "text-[#FF7A00]" : "")} />
-                        {tab.label}
-                      </button>
-                    ))}
-                    <div className="mt-auto pt-6 border-t border-slate-100">
-                      <button
-                        onClick={logout}
-                        className="flex items-center gap-3 px-4 py-3.5 rounded-2xl font-heading font-bold text-sm text-destructive hover:bg-destructive/5 w-full text-left"
-                      >
-                        <LogOut className="w-5 h-5" />
-                        Sign Out
-                      </button>
-                    </div>
-                  </div>
-                </SheetContent>
-              </Sheet>
-            </div>
+  const isLandlord = user?.userType === 'landlord';
+  const accentColor = isLandlord ? "bg-green-500" : "bg-orange-500";
+  const accentText = isLandlord ? "text-green-500" : "text-orange-500";
+  const pillColor = isLandlord ? "bg-green-400" : "bg-orange-400";
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
-            <div className="w-14 h-14 md:w-20 md:h-20 rounded-xl md:rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-2xl md:text-3xl font-heading font-bold shadow-2xl">
-              {getInitial(user?.name || '')}
+  const renderActiveModule = () => {
+    switch (activeTab) {
+      case 'overview': return <DashboardOverview user={user} />;
+      case 'listings': return <ListingManagement user={user} />;
+      case 'landlord-profile': return <LandlordProfile user={user} />;
+      case 'history': return (
+        <div className="space-y-6 max-w-3xl">
+          <div>
+            <h2 className="font-heading font-bold text-2xl text-slate-900">Activity</h2>
+            <p className="text-sm text-muted-foreground">Quick links to your saved items and browsing.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Link to="/saved" className="block">
+              <Card className="border-none shadow-sm rounded-2xl hover:shadow-md transition-shadow h-full">
+                <CardContent className="p-5 flex items-center justify-between">
+                  <div>
+                    <p className="font-heading font-bold text-slate-900">Saved listings</p>
+                    <p className="text-xs text-muted-foreground mt-1">Houses and items you starred</p>
+                  </div>
+                  <Heart className="w-8 h-8 text-red-500/80" />
+                </CardContent>
+              </Card>
+            </Link>
+            <Link to="/notifications" className="block">
+              <Card className="border-none shadow-sm rounded-2xl hover:shadow-md transition-shadow h-full">
+                <CardContent className="p-5 flex items-center justify-between">
+                  <div>
+                    <p className="font-heading font-bold text-slate-900">Notifications</p>
+                    <p className="text-xs text-muted-foreground mt-1">Updates on listings and messages</p>
+                  </div>
+                  <Bell className="w-8 h-8 text-[#0F3D91]" />
+                </CardContent>
+              </Card>
+            </Link>
+            <Link to="/houses" className="block sm:col-span-2">
+              <Card className="border-none shadow-sm rounded-2xl hover:shadow-md transition-shadow">
+                <CardContent className="p-5 flex items-center justify-between">
+                  <div>
+                    <p className="font-heading font-bold text-slate-900">Browse houses</p>
+                    <p className="text-xs text-muted-foreground mt-1">Continue your search in Embu</p>
+                  </div>
+                  <MapPin className="w-8 h-8 text-[#FF7A00]" />
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
+        </div>
+      );
+      case 'support': return <SupportTab />;
+      case 'settings': return <AccountProfileSettings />;
+      default: return <DashboardOverview user={user} />;
+    }
+  };
+
+  return (
+    <div className="flex h-[calc(100vh-100px)] bg-transparent text-slate-900 overflow-hidden font-sans antialiased mt-6 pb-16 md:pb-0">
+      {/* Desktop Sidebar */}
+      <aside className={cn(
+        "hidden md:flex flex-col border-r border-slate-200 bg-white transition-all duration-300 relative z-50 rounded-tl-[2.5rem]",
+        sidebarOpen ? "w-72" : "w-20"
+      )}>
+        <div className="p-6 flex items-center justify-between border-b border-slate-50">
+          {sidebarOpen && (
+            <div className="flex flex-col animate-in fade-in">
+              <h1 className="font-heading font-black text-xl tracking-tight text-[#0F3D91] uppercase">
+                {isLandlord ? 'Landlord Hub' : 'Resident Hub'}
+              </h1>
             </div>
-            <div>
-              <h1 className="font-heading font-bold text-xl md:text-3xl mb-0.5 md:mb-1 truncate max-w-[180px] md:max-w-none">{user?.name}</h1>
-              <div className="flex items-center gap-2 md:gap-3">
-                <Badge className="bg-white/20 hover:bg-white/30 text-white border-none rounded-full px-2 md:px-3 text-[10px] md:text-xs">
-                  {user.userType === 'landlord' ? 'Verified Owner' : 'Verified Resident'}
-                </Badge>
-                <div className="flex items-center gap-1.5 text-white/70 text-[10px] md:text-sm font-medium">
-                  <BarChart3 className="w-3 md:w-3.5 h-3 md:h-3.5" />
-                  {user.reputationScore || 92}%
-                </div>
+          )}
+          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)} className="rounded-xl hover:bg-slate-50">
+            <Menu className="w-5 h-5 text-slate-500" />
+          </Button>
+        </div>
+        <nav className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
+          {navItems.map((item) => (
+            <button key={item.id} onClick={() => setActiveTab(item.id)}
+              className={cn(
+                "w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-200 group relative",
+                activeTab === item.id ? "bg-[#0F3D91] text-white shadow-lg shadow-blue-900/10" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+              )}>
+              <item.icon className={cn("w-5 h-5 transition-transform duration-200", activeTab === item.id ? accentText : "group-hover:scale-110")} />
+              {sidebarOpen && <span className="font-bold text-sm tracking-tight">{item.label}</span>}
+              {activeTab === item.id && <div className={cn("absolute left-0 w-1 h-6 rounded-r-full", pillColor)} />}
+            </button>
+          ))}
+        </nav>
+        <div className="p-4 border-t border-slate-50 space-y-1">
+          <button onClick={logout} className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-red-500 hover:bg-red-50 transition-all duration-200 group">
+            <LogOut className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            {sidebarOpen && <span className="font-bold text-sm">Sign Out</span>}
+          </button>
+          {sidebarOpen && (
+            <div className="mt-4 p-4 rounded-2xl bg-slate-50 flex items-center gap-3">
+              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-sm", accentColor)}>{user?.name?.[0] || 'U'}</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-black truncate text-slate-900">{user?.name}</p>
+                <p className="text-[10px] font-bold text-slate-400 truncate uppercase tracking-widest">{isLandlord ? 'Landlord' : 'Resident'}</p>
               </div>
             </div>
+          )}
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col min-w-0 relative h-full overflow-hidden">
+        <header className="md:hidden flex items-center justify-between p-4 bg-white border-b border-slate-200">
+          <div className="flex flex-col">
+            <h1 className="font-heading font-black text-lg tracking-tight text-[#0F3D91] uppercase">
+              {isLandlord ? 'Landlord Hub' : 'Resident Hub'}
+            </h1>
           </div>
-          <div className="hidden md:flex items-center gap-3 relative z-20">
-            <Button
-              onClick={logout}
-              variant="secondary"
-              className="bg-white/10 hover:bg-white/20 text-white border-white/20 border rounded-xl font-heading font-bold gap-2"
-            >
-              <LogOut className="w-4 h-4" />
-              Sign Out
-            </Button>
+          <Button variant="outline" size="icon" className="rounded-xl border-slate-200" onClick={() => setIsMobileMenuOpen(true)}>
+            <Menu className="w-5 h-5" />
+          </Button>
+        </header>
+
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 custom-scrollbar bg-[#F8FAFC] md:rounded-tr-[2.5rem] md:border-t md:border-r border-slate-200 pb-24 md:pb-12">
+          <div className="max-w-7xl mx-auto h-full flex flex-col">
+            {renderActiveModule()}
           </div>
         </div>
-      </div>
 
-      <div className="max-w-6xl mx-auto px-4 md:px-6 relative z-10">
-        <Card className="border-none shadow-[0_10px_40px_rgba(0,0,0,0.05)] rounded-[24px] md:rounded-[32px] overflow-hidden bg-white/95 backdrop-blur-xl">
-          <div className="flex flex-col md:flex-row h-full min-h-[500px] md:min-h-[600px]">
-            {/* Desktop Sidebar Navigation */}
-            <div className="hidden md:block w-64 bg-slate-50 border-r border-slate-100 p-6">
-              <nav className="flex flex-col gap-2">
-                {navItems.map(tab => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-3.5 rounded-2xl font-heading font-bold text-sm transition-all text-left",
-                      activeTab === tab.id
-                        ? "bg-white shadow-sm text-[#0F3D91] ring-1 ring-slate-100"
-                        : "text-muted-foreground hover:bg-white/60 hover:text-foreground"
-                    )}
-                  >
-                    <tab.icon className={cn("w-5 h-5", activeTab === tab.id ? "text-[#FF7A00]" : "")} />
-                    {tab.label}
-                  </button>
-                ))}
-              </nav>
+        {/* Mobile Sidebar Sheet */}
+        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+          <SheetContent side="left" className="w-[300px] p-0 border-none bg-white">
+            <div className="p-6 flex items-center gap-3 border-b border-slate-50">
+              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-sm shadow-lg", accentColor)}>S</div>
+              <h1 className="font-heading font-black text-xl tracking-tight text-[#0F3D91] uppercase">SKITECH</h1>
             </div>
-
-            {/* Content Area */}
-            <div className="flex-1 p-5 md:p-8 lg:p-10">
-              {activeTab === 'overview' && <DashboardOverview user={user} />}
-              {activeTab === 'listings' && <ListingManagement user={user} />}
-              {activeTab === 'landlord-profile' && <LandlordProfile user={user} />}
-              {activeTab === 'support' && <SupportTab />}
-              {activeTab === 'settings' && (
-                <div className="max-w-2xl space-y-8">
-                  <h2 className="font-heading font-bold text-2xl">Account Settings</h2>
-                  <div className="space-y-4">
-                    <div className="grid gap-2">
-                      <Label>Full Name</Label>
-                      <Input defaultValue={user.name} className="rounded-xl h-11" />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label>Email Address</Label>
-                      <Input defaultValue={user.email} disabled className="rounded-xl h-11 bg-muted/30" />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label>Phone Number</Label>
-                      <Input defaultValue="+254 700 000 000" className="rounded-xl h-11" />
-                    </div>
-                    <Button className="bg-[#0F3D91] rounded-xl h-11 font-heading font-bold px-8">Save Changes</Button>
-                  </div>
-
-                  <div className="pt-8 space-y-4">
-                    <h3 className="font-heading font-bold text-lg">Preferences</h3>
-                    <div className="grid grid-cols-1 gap-4">
-                      <Card className="border-none shadow-sm bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
-                        <CardContent className="p-4 flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Bell className="w-5 h-5 text-[#0F3D91]" />
-                            <div>
-                              <p className="text-sm font-bold">Notification Settings</p>
-                              <p className="text-[11px] text-muted-foreground">Control alerts and messages</p>
-                            </div>
-                          </div>
-                          <ArrowLeft className="w-4 h-4 rotate-180" />
-                        </CardContent>
-                      </Card>
-                      <Card className="border-none shadow-sm bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
-                        <CardContent className="p-4 flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Shield className="w-5 h-5 text-[#FF7A00]" />
-                            <div>
-                              <p className="text-sm font-bold">Privacy & Security</p>
-                              <p className="text-[11px] text-muted-foreground">Manage your data and security</p>
-                            </div>
-                          </div>
-                          <ArrowLeft className="w-4 h-4 rotate-180" />
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {/* Other tabs can be added similarly */}
-            </div>
-          </div>
-        </Card>
-        <div className="mt-8 mb-24 text-center">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#0F3D91]/30">V.1.1.1 Skitech. Ecosystem</p>
-        </div>
-      </div>
+            <nav className="p-4 space-y-1">
+              {navItems.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false); }}
+                  className={cn(
+                    "w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-200 text-left",
+                    activeTab === tab.id ? "bg-[#0F3D91] text-white shadow-lg shadow-blue-900/10" : "text-slate-500 hover:bg-slate-50"
+                  )}
+                >
+                  <tab.icon className={cn("w-5 h-5", activeTab === tab.id ? accentText : "")} />
+                  <span className="font-bold text-sm tracking-tight">{tab.label}</span>
+                </button>
+              ))}
+              <div className="pt-6 mt-6 border-t border-slate-100">
+                <button onClick={logout} className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-red-500 hover:bg-red-50 transition-all duration-200">
+                  <LogOut className="w-5 h-5" />
+                  <span className="font-bold text-sm">Sign Out</span>
+                </button>
+              </div>
+            </nav>
+          </SheetContent>
+        </Sheet>
+      </main>
     </div>
   );
 }
@@ -1448,6 +1540,10 @@ export default function AccountPage() {
 
   if (!isAuthenticated) {
     return <GuestView />;
+  }
+
+  if (user?.role === 'admin') {
+    return <Navigate to="/admin" replace />;
   }
 
   return <Dashboard user={user} logout={logout} />;

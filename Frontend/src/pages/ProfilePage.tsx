@@ -1,334 +1,183 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Mail, Phone, MapPin, Calendar, Edit2, Save, X, Camera, Shield, Bell, Settings, LogOut } from 'lucide-react';
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Bell, ChevronRight, HelpCircle, LogOut, Mail, MapPin, Phone, Settings, Shield, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
-
-import { BackButton } from '../components/ui/BackButton';
+import { BackButton } from '@/components/ui/BackButton';
 
 export default function ProfilePage() {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    bio: '',
-    location: ''
-  });
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/account');
-      return;
-    }
-    
-    if (user) {
-      setFormData({
-        name: user.name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        bio: user.bio || '',
-        location: user.location || ''
-      });
-    }
-  }, [isAuthenticated, user, navigate]);
-
-  const handleSave = () => {
-    // In a real app, this would update the user profile via API
-    toast({
-      title: "Profile Updated",
-      description: "Your profile has been successfully updated.",
-    });
-    setIsEditing(false);
-  };
-
-  const handleCancel = () => {
-    if (user) {
-      setFormData({
-        name: user.name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        bio: user.bio || '',
-        location: user.location || ''
-      });
-    }
-    setIsEditing(false);
-  };
+    if (!isAuthenticated) navigate('/account', { replace: true });
+  }, [isAuthenticated, navigate]);
 
   const handleLogout = () => {
     logout();
     navigate('/');
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out.",
-    });
+    toast({ title: 'Logged Out', description: 'You have been successfully logged out.' });
   };
 
   if (!isAuthenticated || !user) {
     return null;
   }
 
+  const roleLabel = user.userType === 'landlord' ? 'Landlord' : 'Resident';
+
   return (
     <div className="min-h-screen bg-[#F7F9FC] pb-24">
-      {/* Header */}
-      <div className="bg-white border-b border-slate-100 px-6 py-14 text-center relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#0F3D91]/5 rounded-full -mr-32 -mt-32 blur-3xl opacity-50" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#FF7A00]/5 rounded-full -ml-32 -mb-32 blur-3xl opacity-50" />
-
-        <div className="max-w-2xl mx-auto space-y-4 relative z-10 flex flex-col items-center">
-          <BackButton />
-          
-          <div className="relative">
-            <div className="w-24 h-24 bg-gradient-to-br from-[#0F3D91] to-[#FF7A00] rounded-full flex items-center justify-center text-white text-3xl font-bold">
+      <div className="bg-[#0F3D91] text-white pt-10 pb-16 px-6 md:pt-12 md:pb-20 rounded-b-[40px] shadow-2xl relative overflow-hidden mb-[-48px] z-0">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl" />
+        <div className="max-w-2xl mx-auto relative z-10">
+          <div className="flex items-center justify-between mb-6">
+            <BackButton />
+            <Link
+              to="/account?tab=settings"
+              className="text-[11px] font-bold uppercase tracking-widest text-white/90 hover:text-white flex items-center gap-1"
+            >
+              <Settings className="w-4 h-4" />
+              Edit
+            </Link>
+          </div>
+          <div className="flex flex-col items-center text-center space-y-4">
+            <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center text-3xl font-heading font-bold shadow-xl">
               {user.name?.charAt(0).toUpperCase()}
             </div>
-            <button className="absolute bottom-0 right-0 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center border border-slate-200 hover:bg-slate-50 transition-colors">
-              <Camera className="w-4 h-4 text-slate-600" />
-            </button>
-          </div>
-          
-          <div className="text-center">
-            <h1 className="font-heading font-black text-[#0F3D91] text-3xl md:text-4xl leading-tight uppercase tracking-tighter">
-              {user.name}
-            </h1>
-            <p className="text-slate-500 text-sm max-w-lg mx-auto font-medium leading-relaxed">
-              {user.userType === 'landlord' ? 'Property Owner' : 'Tenant'} • Member since {new Date().getFullYear()}
-            </p>
-            <div className="flex items-center justify-center gap-2 mt-3">
-              <Badge variant={user.verified ? "default" : "secondary"} className="bg-[#0F3D91] text-white">
-                {user.verified ? 'Verified' : 'Unverified'}
-              </Badge>
-              {user.userType === 'landlord' && (
-                <Badge variant="outline" className="border-[#FF7A00] text-[#FF7A00]">
-                  Landlord
+            <div>
+              <h1 className="font-heading font-bold text-2xl md:text-3xl">{user.name}</h1>
+              <p className="text-white/75 text-sm mt-1 font-medium">
+                {roleLabel} · {user.verified ? 'Verified' : 'Unverified'}
+              </p>
+              <div className="flex flex-wrap justify-center gap-2 mt-3">
+                <Badge className="bg-white/20 hover:bg-white/25 text-white border-none rounded-full">
+                  {user.email}
                 </Badge>
-              )}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 mt-8">
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-white p-1 rounded-xl shadow-sm">
-            <TabsTrigger value="profile" className="data-[state=active]:bg-[#0F3D91] data-[state=active]:text-white rounded-lg">
-              <User className="w-4 h-4 mr-2" />
-              Profile
-            </TabsTrigger>
-            <TabsTrigger value="security" className="data-[state=active]:bg-[#0F3D91] data-[state=active]:text-white rounded-lg">
-              <Shield className="w-4 h-4 mr-2" />
-              Security
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="data-[state=active]:bg-[#0F3D91] data-[state=active]:text-white rounded-lg">
-              <Bell className="w-4 h-4 mr-2" />
-              Notifications
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="data-[state=active]:bg-[#0F3D91] data-[state=active]:text-white rounded-lg">
-              <Settings className="w-4 h-4 mr-2" />
-              Settings
-            </TabsTrigger>
-          </TabsList>
+      <div className="max-w-2xl mx-auto px-4 md:px-6 relative z-10 space-y-6">
+        <Card className="border-none shadow-[0_10px_40px_rgba(0,0,0,0.06)] rounded-[24px] overflow-hidden bg-white/95 backdrop-blur">
+          <CardHeader className="pb-2">
+            <CardTitle className="font-heading font-bold text-lg text-slate-900 flex items-center gap-2">
+              <User className="w-5 h-5 text-[#0F3D91]" />
+              About you
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-0">
+            {user.bio ? (
+              <p className="text-slate-600 text-sm leading-relaxed">{user.bio}</p>
+            ) : (
+              <p className="text-slate-400 text-sm italic">No bio yet — add one in profile settings.</p>
+            )}
+            <div className="divide-y divide-slate-100 rounded-2xl border border-slate-100 overflow-hidden">
+              <div className="flex items-center gap-3 p-4 bg-slate-50/50">
+                <Phone className="w-4 h-4 text-[#0F3D91] shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Phone</p>
+                  <p className="text-sm font-medium text-slate-900 truncate">{user.phone || '—'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-4 bg-slate-50/50">
+                <MapPin className="w-4 h-4 text-[#FF7A00] shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Location</p>
+                  <p className="text-sm font-medium text-slate-900 truncate">{user.location || '—'}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-4 bg-slate-50/50">
+                <Mail className="w-4 h-4 text-slate-500 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Email</p>
+                  <p className="text-sm font-medium text-slate-900 truncate">{user.email}</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          <TabsContent value="profile" className="space-y-6">
-            <Card className="rounded-2xl border-none shadow-sm bg-white">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle className="text-[#0F3D91]">Personal Information</CardTitle>
-                  <CardDescription>Update your personal details and contact information</CardDescription>
-                </div>
-                <Button
-                  variant={isEditing ? "outline" : "default"}
-                  onClick={isEditing ? handleCancel : () => setIsEditing(true)}
-                  className="rounded-xl"
-                >
-                  {isEditing ? <X className="w-4 h-4 mr-2" /> : <Edit2 className="w-4 h-4 mr-2" />}
-                  {isEditing ? 'Cancel' : 'Edit'}
-                </Button>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
-                      disabled={!isEditing}
-                      className="rounded-xl"
-                    />
+        <div className="grid grid-cols-1 gap-3">
+          <Link to="/account?tab=settings">
+            <Card className="border-none shadow-sm rounded-2xl hover:shadow-md transition-shadow cursor-pointer bg-white">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#0F3D91]/10 flex items-center justify-center">
+                    <Settings className="w-5 h-5 text-[#0F3D91]" />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      disabled={!isEditing}
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      disabled={!isEditing}
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Location</Label>
-                    <Input
-                      id="location"
-                      value={formData.location}
-                      onChange={(e) => setFormData({...formData, location: e.target.value})}
-                      disabled={!isEditing}
-                      className="rounded-xl"
-                    />
+                  <div>
+                    <p className="font-heading font-bold text-slate-900">Profile &amp; settings</p>
+                    <p className="text-xs text-muted-foreground">Update name, phone, and bio</p>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bio">Bio</Label>
-                  <Textarea
-                    id="bio"
-                    value={formData.bio}
-                    onChange={(e) => setFormData({...formData, bio: e.target.value})}
-                    disabled={!isEditing}
-                    className="rounded-xl resize-none"
-                    rows={3}
-                    placeholder="Tell us about yourself..."
-                  />
-                </div>
-                {isEditing && (
-                  <div className="flex gap-2 pt-4">
-                    <Button onClick={handleSave} className="bg-[#0F3D91] hover:bg-[#FF7A00] rounded-xl">
-                      <Save className="w-4 h-4 mr-2" />
-                      Save Changes
-                    </Button>
-                    <Button variant="outline" onClick={handleCancel} className="rounded-xl">
-                      Cancel
-                    </Button>
-                  </div>
-                )}
+                <ChevronRight className="w-5 h-5 text-slate-300" />
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="security" className="space-y-6">
-            <Card className="rounded-2xl border-none shadow-sm bg-white">
-              <CardHeader>
-                <CardTitle className="text-[#0F3D91]">Security Settings</CardTitle>
-                <CardDescription>Manage your password and security preferences</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="current-password">Current Password</Label>
-                  <Input id="current-password" type="password" className="rounded-xl" />
+          </Link>
+          <Link to="/notifications">
+            <Card className="border-none shadow-sm rounded-2xl hover:shadow-md transition-shadow cursor-pointer bg-white">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                    <Bell className="w-5 h-5 text-[#0F3D91]" />
+                  </div>
+                  <div>
+                    <p className="font-heading font-bold text-slate-900">Notifications</p>
+                    <p className="text-xs text-muted-foreground">Alerts and updates</p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="new-password">New Password</Label>
-                  <Input id="new-password" type="password" className="rounded-xl" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirm New Password</Label>
-                  <Input id="confirm-password" type="password" className="rounded-xl" />
-                </div>
-                <Button className="bg-[#0F3D91] hover:bg-[#FF7A00] rounded-xl">
-                  Update Password
-                </Button>
+                <ChevronRight className="w-5 h-5 text-slate-300" />
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="notifications" className="space-y-6">
-            <Card className="rounded-2xl border-none shadow-sm bg-white">
-              <CardHeader>
-                <CardTitle className="text-[#0F3D91]">Notification Preferences</CardTitle>
-                <CardDescription>Choose how you want to receive notifications</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between py-3 border-b">
-                  <div>
-                    <p className="font-medium">Email Notifications</p>
-                    <p className="text-sm text-slate-500">Receive updates via email</p>
+          </Link>
+          <Link to="/help">
+            <Card className="border-none shadow-sm rounded-2xl hover:shadow-md transition-shadow cursor-pointer bg-white">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
+                    <HelpCircle className="w-5 h-5 text-purple-600" />
                   </div>
-                  <Button variant="outline" size="sm" className="rounded-xl">Configure</Button>
-                </div>
-                <div className="flex items-center justify-between py-3 border-b">
                   <div>
-                    <p className="font-medium">Push Notifications</p>
-                    <p className="text-sm text-slate-500">Browser push notifications</p>
+                    <p className="font-heading font-bold text-slate-900">Help center</p>
+                    <p className="text-xs text-muted-foreground">Guides and support</p>
                   </div>
-                  <Button variant="outline" size="sm" className="rounded-xl">Configure</Button>
                 </div>
-                <div className="flex items-center justify-between py-3">
-                  <div>
-                    <p className="font-medium">SMS Notifications</p>
-                    <p className="text-sm text-slate-500">Receive text messages</p>
-                  </div>
-                  <Button variant="outline" size="sm" className="rounded-xl">Configure</Button>
-                </div>
+                <ChevronRight className="w-5 h-5 text-slate-300" />
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent value="settings" className="space-y-6">
-            <Card className="rounded-2xl border-none shadow-sm bg-white">
-              <CardHeader>
-                <CardTitle className="text-[#0F3D91]">Account Settings</CardTitle>
-                <CardDescription>Manage your account preferences</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between py-3 border-b">
-                  <div>
-                    <p className="font-medium">Language</p>
-                    <p className="text-sm text-slate-500">English (US)</p>
+          </Link>
+          <Link to="/forgot-password">
+            <Card className="border-none shadow-sm rounded-2xl hover:shadow-md transition-shadow cursor-pointer bg-white">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
+                    <Shield className="w-5 h-5 text-slate-600" />
                   </div>
-                  <Button variant="outline" size="sm" className="rounded-xl">Change</Button>
-                </div>
-                <div className="flex items-center justify-between py-3 border-b">
                   <div>
-                    <p className="font-medium">Theme</p>
-                    <p className="text-sm text-slate-500">Light Mode</p>
+                    <p className="font-heading font-bold text-slate-900">Password &amp; sign-in</p>
+                    <p className="text-xs text-muted-foreground">Reset via email</p>
                   </div>
-                  <Button variant="outline" size="sm" className="rounded-xl">Change</Button>
                 </div>
-                <div className="flex items-center justify-between py-3">
-                  <div>
-                    <p className="font-medium">Delete Account</p>
-                    <p className="text-sm text-red-500">Permanently delete your account</p>
-                  </div>
-                  <Button variant="destructive" size="sm" className="rounded-xl">Delete</Button>
-                </div>
+                <ChevronRight className="w-5 h-5 text-slate-300" />
               </CardContent>
             </Card>
+          </Link>
+        </div>
 
-            <Card className="rounded-2xl border-none shadow-sm bg-white">
-              <CardContent className="pt-6">
-                <Button 
-                  onClick={handleLogout}
-                  variant="outline" 
-                  className="w-full rounded-xl border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full h-12 rounded-2xl border-red-200 text-red-600 hover:bg-red-50"
+          onClick={handleLogout}
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          Sign out
+        </Button>
       </div>
     </div>
   );

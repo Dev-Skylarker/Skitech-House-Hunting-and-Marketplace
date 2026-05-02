@@ -16,9 +16,11 @@ export function AppLayout() {
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isHelpCenter = location.pathname === '/help';
   const isInquiry = location.pathname === '/inquiry';
+  const isAccountRoute = location.pathname.startsWith('/account');
+  const isLandlordSettings = location.pathname.startsWith('/landlord-settings');
   const isHome = location.pathname === '/';
 
-  const showFooter = !isAdminRoute && !isHelpCenter;
+  const showFooter = !isAdminRoute && !isHelpCenter && !isAccountRoute && !isLandlordSettings;
   const showBanner = showFooter && !isInquiry;
   const showDownload = showFooter && isHome; // Show download banner on home or as part of global stack
 
@@ -43,8 +45,8 @@ export function AppLayout() {
   return (
     <div className="min-h-screen bg-[#F7F9FC] selection:bg-[#0F3D91] selection:text-white flex flex-col">
       <div className={cn(
-        "mx-auto w-full min-h-screen flex flex-col relative overflow-x-hidden pb-24 flex-1",
-        isAdminRoute ? "max-w-[1600px]" : "max-w-[1200px]"
+        "mx-auto w-full min-h-screen flex flex-col relative overflow-x-hidden flex-1",
+        isAdminRoute ? "max-w-[1600px] pb-0" : "max-w-[1200px] pb-24"
       )}>
         <TopNavbar />
 
